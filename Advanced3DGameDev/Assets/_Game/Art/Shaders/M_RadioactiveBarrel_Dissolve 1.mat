@@ -7,13 +7,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_RadioactiveBarrel_Dissolve
-  m_Shader: {fileID: -6465566751694194690, guid: f5733dfc18d2e7346a83747c7c7de330, type: 3}
-  m_Parent: {fileID: 0}
+  m_Name: M_RadioactiveBarrel_Dissolve 1
+  m_Shader: {fileID: -6465566751694194690, guid: 49c5babc12698064286dba462172d031, type: 3}
+  m_Parent: {fileID: -876546973899608171, guid: 49c5babc12698064286dba462172d031, type: 3}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
-  m_LightmapFlags: 2
+  m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -28,14 +28,6 @@ Material:
         m_Texture: {fileID: 2800000, guid: ea5077727536d8845b64d0cdedb20a46, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _Dissolve_Noise:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Emission_Map:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _Metallic_Alpha_Smoothness:
         m_Texture: {fileID: 2800000, guid: 25738a53dc284a940a007b026c5afaef, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -48,35 +40,17 @@ Material:
         m_Texture: {fileID: 2800000, guid: 208e81159a7aea347883d289e6ec2a00, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Cutoff_Height: 0
-    - _Dissolution_Amount: 0.26
-    - _Dissolution_Emission_Strength: 54
+    - _Dissolution_Amount: 0
     - _Edge_Intensity: 50
     - _Edge_Width: 0.1
-    - _Noise_Density: 20
-    - _Noise_Scale: 33
-    - _Noise_Strength: 0.6
+    - _Fog_Intensity: 0.5
+    - _Noise_Scale: 5
+    - _Pulse_Speed: 10
     - _QueueControl: 0
-    - _QueueOffset: 0
     m_Colors:
-    - _Dissolution_Inner_Colour: {r: 0.8674531, g: 1, b: 0, a: 1}
-    - _Dissolution_Outer_Colour: {r: 0.14530656, g: 0.5849056, b: 0.19805858, a: 1}
-    - _Edge_Colour: {r: 0.01402044, g: 0.25, b: 0, a: 1}
-    - _Emission_Colour: {r: 0, g: 0, b: 0, a: 1}
+    - _Edge_Colour: {r: 0.6671963, g: 0.7529412, b: 0.003921554, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &3918626760496703316

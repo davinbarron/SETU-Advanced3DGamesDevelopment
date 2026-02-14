@@ -47,7 +47,7 @@ Material:
     - _Edge_Width: 0.1
     - _Fog_Intensity: 0.5
     - _Noise_Scale: 5
-    - _Pulse_Speed: 10
+    - _Pulse_Speed: 20
     - _QueueControl: 0
     m_Colors:
     - _Edge_Colour: {r: 0.078431375, g: 0.7529412, b: 0.003921554, a: 1}

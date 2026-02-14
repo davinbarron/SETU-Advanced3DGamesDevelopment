@@ -50,7 +50,7 @@ Material:
     - _Pulse_Speed: 10
     - _QueueControl: 0
     m_Colors:
-    - _Edge_Colour: {r: 0.6671963, g: 0.7529412, b: 0.003921554, a: 1}
+    - _Edge_Colour: {r: 0.078431375, g: 0.7529412, b: 0.003921554, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &3918626760496703316

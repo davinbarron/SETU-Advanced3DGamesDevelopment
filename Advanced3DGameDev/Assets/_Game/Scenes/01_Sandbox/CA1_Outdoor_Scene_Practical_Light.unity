@@ -288,12 +288,12 @@ ReflectionProbe:
   m_Enabled: 1
   serializedVersion: 2
   m_Type: 0
-  m_Mode: 1
+  m_Mode: 0
   m_RefreshMode: 0
   m_TimeSlicingMode: 0
-  m_Resolution: 512
+  m_Resolution: 128
   m_UpdateFrequency: 0
-  m_BoxSize: {x: 20, y: 20, z: 20}
+  m_BoxSize: {x: 5, y: 5, z: 5}
   m_BoxOffset: {x: 0, y: 0, z: 0}
   m_NearClip: 0.3
   m_FarClip: 1000
@@ -470,7 +470,7 @@ Transform:
   - {fileID: 1745608707}
   m_Father: {fileID: 581918277}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &434204566
+--- !u!1 &277760900
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -478,23 +478,38 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 434204569}
-  - component: {fileID: 434204568}
-  - component: {fileID: 434204567}
+  - component: {fileID: 277760901}
+  - component: {fileID: 277760903}
+  - component: {fileID: 277760902}
   m_Layer: 0
-  m_Name: Key Light
+  m_Name: Motivated Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &434204567
+--- !u!4 &277760901
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 277760900}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.5, z: 1.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 870671613}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &277760902
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 434204566}
+  m_GameObject: {fileID: 277760900}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
@@ -517,24 +532,24 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
---- !u!108 &434204568
+--- !u!108 &277760903
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 434204566}
+  m_GameObject: {fileID: 277760900}
   m_Enabled: 1
   serializedVersion: 12
-  m_Type: 0
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 12
-  m_Range: 10
-  m_SpotAngle: 87.68123
-  m_InnerSpotAngle: 43.16637
+  m_Type: 2
+  m_Color: {r: 0.078431375, g: 0.7529412, b: 0.003921569, a: 1}
+  m_Intensity: 2
+  m_Range: 3
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
-    m_Type: 2
+    m_Type: 0
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -571,7 +586,7 @@ Light:
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 0
-  m_ColorTemperature: 3500
+  m_ColorTemperature: 6570
   m_UseColorTemperature: 1
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
@@ -582,21 +597,6 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!4 &434204569
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 434204566}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0.12040904, y: 0.88575786, z: -0.23522845, w: -0.3815786}
-  m_LocalPosition: {x: 1.875, y: 1.6, z: 3.201}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 870671613}
-  m_LocalEulerAnglesHint: {x: 30.571, y: 225.997, z: -2.249}
 --- !u!1001 &558517329
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -864,7 +864,7 @@ GameObject:
   - component: {fileID: 756591915}
   - component: {fileID: 756591914}
   m_Layer: 0
-  m_Name: Sun
+  m_Name: Key Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -910,7 +910,7 @@ Light:
   serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 0.54509807, b: 0.32941177, a: 1}
-  m_Intensity: 0.8
+  m_Intensity: 1.5
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -1136,9 +1136,9 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 756591916}
-  - {fileID: 434204569}
   - {fileID: 49725696}
   - {fileID: 210223085}
+  - {fileID: 277760901}
   - {fileID: 853105902}
   - {fileID: 93405969}
   m_Father: {fileID: 0}

@@ -952,7 +952,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 802832828141805167, guid: bcb83baa86c47914ba0fed674f1d9440, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.0000018732894
+      value: -0.008046125
       objectReference: {fileID: 0}
     - target: {fileID: 802832828141805167, guid: bcb83baa86c47914ba0fed674f1d9440, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1520,13 +1520,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a21c3d2c9fad0fb4b90f4bf854a6c0cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Semester2.BurnAndDissolveA2
-  duration: 7
+  duration: 10
   dissolveCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
-      value: 0
+      time: -0.00016272068
+      value: 0.006230116
       inSlope: 0
       outSlope: 0
       tangentMode: 0

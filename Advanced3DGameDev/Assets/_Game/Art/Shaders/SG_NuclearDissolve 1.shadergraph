@@ -1108,7 +1108,7 @@
     "m_Hidden": false,
     "m_PerRendererData": false,
     "m_customAttributes": [],
-    "m_Value": 0.0,
+    "m_Value": 0.3100000023841858,
     "m_FloatType": 1,
     "m_LiteralFloatMode": false,
     "m_RangeValues": {
@@ -1361,8 +1361,8 @@
     "m_ObjectId": "19bc604ee67f4d44a1c9b78a26802959",
     "m_Title": "NOISE",
     "m_Position": {
-        "x": -3679.999267578125,
-        "y": 36.66668701171875
+        "x": -3679.999755859375,
+        "y": 36.6666259765625
     }
 }
 
@@ -2300,7 +2300,7 @@
     "m_ObjectId": "56bcc8e342f5402a91f880f5291bf193",
     "m_Title": "Ambient Occlusion Map",
     "m_Position": {
-        "x": -1481.3328857421875,
+        "x": -1480.666748046875,
         "y": 74.0
     }
 }
@@ -2467,8 +2467,8 @@
     "m_ObjectId": "5d77678f16114c82b33793fd59207d6f",
     "m_Title": "RIM (BURN BAND)",
     "m_Position": {
-        "x": -2145.9990234375,
-        "y": 516.0001831054688
+        "x": -2145.999755859375,
+        "y": 516.0
     }
 }
 
@@ -2911,12 +2911,12 @@
     "m_Hidden": false,
     "m_PerRendererData": false,
     "m_customAttributes": [],
-    "m_Value": 2.0,
+    "m_Value": 15.0,
     "m_FloatType": 1,
     "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 1.0,
-        "y": 10.0
+        "y": 50.0
     },
     "m_SliderType": 0,
     "m_SliderPower": 3.0,
@@ -3435,8 +3435,8 @@
     "m_ObjectId": "7b80130fb79e47bdbe27fc63b9927534",
     "m_Title": "A",
     "m_Position": {
-        "x": -3440.666259765625,
-        "y": 835.3333129882813
+        "x": -3440.66650390625,
+        "y": 835.333251953125
     }
 }
 
@@ -3842,8 +3842,8 @@
     "m_ObjectId": "8fa8d7c4705c42b885fd4726fca6ead8",
     "m_Title": "Metallic Map from Red and Smoothness map from Alpha",
     "m_Position": {
-        "x": -2156.666259765625,
-        "y": -293.33331298828127
+        "x": -2156.66650390625,
+        "y": -293.3333740234375
     }
 }
 
@@ -4051,7 +4051,7 @@
     "m_ObjectId": "9994500e01d74ee6b2d9f2acffeefe38",
     "m_Title": "PULSE EFFECT",
     "m_Position": {
-        "x": -2135.9990234375,
+        "x": -2135.999755859375,
         "y": 1316.666748046875
     }
 }
@@ -4197,8 +4197,8 @@
     "m_ObjectId": "a15fca0fac73475eac6c8cd9ffb8e9c1",
     "m_Title": "Normal Map",
     "m_Position": {
-        "x": -1550.666259765625,
-        "y": -474.0
+        "x": -1550.666748046875,
+        "y": -474.00006103515627
     }
 }
 
@@ -4686,8 +4686,8 @@
     "m_ObjectId": "c08af8bdddf84361ada253e6457de715",
     "m_Title": "A - W",
     "m_Position": {
-        "x": -2804.666259765625,
-        "y": 979.9998779296875
+        "x": -2804.66650390625,
+        "y": 979.999755859375
     }
 }
 
@@ -4779,7 +4779,7 @@
     "m_Title": "EDGE COLOUR",
     "m_Position": {
         "x": -1069.333251953125,
-        "y": 796.6668090820313
+        "y": 796.6666259765625
     }
 }
 
@@ -5047,8 +5047,8 @@
     "m_ObjectId": "d1e32562784649b78e150919c493e95b",
     "m_Title": "Base Color Map",
     "m_Position": {
-        "x": -1054.6663818359375,
-        "y": -639.9998779296875
+        "x": -1054.0,
+        "y": -640.0
     }
 }
 
@@ -5220,7 +5220,7 @@
     "m_ShaderOutputName": "InMinMax",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.0,
+        "x": -0.25,
         "y": 2.0
     },
     "m_DefaultValue": {
@@ -5296,8 +5296,8 @@
     "m_ObjectId": "de6a2fffff484191a3e888331adc3ecc",
     "m_Title": "W",
     "m_Position": {
-        "x": -3407.332763671875,
-        "y": 1147.3333740234375
+        "x": -3407.333251953125,
+        "y": 1147.333251953125
     }
 }
 
@@ -5606,8 +5606,8 @@
     "m_ObjectId": "e63fa68297ff474597fb588f1e88dde8",
     "m_Title": "EMISSION",
     "m_Position": {
-        "x": -825.9994506835938,
-        "y": 542.0001831054688
+        "x": -825.999755859375,
+        "y": 542.0
     }
 }
 
@@ -5870,8 +5870,8 @@
     "m_ObjectId": "f6388f09ab7c44b491a9859ecf7fc11e",
     "m_Title": "A + W",
     "m_Position": {
-        "x": -2793.999267578125,
-        "y": 1246.0
+        "x": -2793.999755859375,
+        "y": 1245.999755859375
     }
 }
 

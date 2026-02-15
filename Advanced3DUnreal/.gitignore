@@ -1,0 +1,32 @@
+# --- Unreal Engine Standard Ignores ---
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+FileOpenOrder/
+
+# --- Project Specific ---
+# Ignore the built-in Visual Studio/Rider files
+.vs/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# --- Local User Settings ---
+.idea/
+.vscode/
+*.DotSettings.user
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Plugins & Marketplace ---
+
+# --- Backup and Autosave ---
+Content/Autosave/
+Content/Collections/

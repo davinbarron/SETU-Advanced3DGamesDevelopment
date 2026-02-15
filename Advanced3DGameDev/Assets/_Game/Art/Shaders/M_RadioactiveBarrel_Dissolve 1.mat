@@ -43,14 +43,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _Dissolution_Amount: 0
-    - _Edge_Intensity: 50
+    - _Edge_Intensity: 25
     - _Edge_Width: 0.1
     - _Fog_Intensity: 0.5
     - _Noise_Scale: 5
     - _Pulse_Speed: 20
     - _QueueControl: 0
     m_Colors:
-    - _Edge_Colour: {r: 0.078431375, g: 0.7529412, b: 0.003921554, a: 1}
+    - _Edge_Colour: {r: 0.31209153, g: 2.9960787, b: 0.015604518, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &3918626760496703316

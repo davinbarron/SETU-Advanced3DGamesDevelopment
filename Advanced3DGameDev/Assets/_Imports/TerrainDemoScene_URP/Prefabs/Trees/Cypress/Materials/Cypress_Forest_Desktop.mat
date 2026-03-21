@@ -45,12 +45,11 @@ Material:
   m_ValidKeywords:
   - BACKFACE_NORMAL_MODE_MIRROR
   - _WINDQUALITY_PALM
-  m_InvalidKeywords:
-  - _EMISSION
+  m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 1
-  m_CustomRenderQueue: 2450
+  m_CustomRenderQueue: -1
   stringTagMap:
     MotionVector: User
   disabledShaderPasses:
@@ -97,6 +96,7 @@ Material:
     - Diffusion_Profile: 3.5648174
     - EFFECT_BILLBOARD: 0
     - EFFECT_EXTRA_TEX: 1
+    - _AO: 2.4
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 1
     - _AlphaClipThreshold: 0.1
@@ -105,6 +105,7 @@ Material:
     - _AlphaSrcBlend: 1
     - _AlphaToMask: 0
     - _AlphaToMaskInspectorValue: 0
+    - _BaseLight: 0.35
     - _Blend: 0
     - _BlendMode: 0
     - _CanopyBaseHeight: 88
@@ -114,6 +115,7 @@ Material:
     - _Cull: 0
     - _CullMode: 0
     - _CullModeForward: 0
+    - _Cutoff: 0.5
     - _DepthOffsetEnable: 0
     - _DoubleSidedEnable: 1
     - _DoubleSidedGIMode: 0
@@ -126,6 +128,7 @@ Material:
     - _Metallic: 0
     - _Mip_Bias: 0
     - _NormalMapKwToggle: 1
+    - _Occlusion: 7.5
     - _OldHueVarBehavior: 0
     - _OpaqueCullMode: 2
     - _QueueControl: 0
@@ -141,6 +144,7 @@ Material:
     - _SphereAODarken: 0.5
     - _SphereAORadius: 3
     - _SphereAOStretch: 3.98
+    - _SquashAmount: 1
     - _SrcBlend: 1
     - _StencilRef: 0
     - _StencilRefDepth: 0
@@ -184,6 +188,8 @@ Material:
     - _HueVariationColor: {r: 0.6132076, g: 0.4786272, b: 0.18164827, a: 0.21960784}
     - _Smoothness_Remap: {r: 0, g: 0.4, b: 0, a: 0}
     - _SubsurfaceColor: {r: 0.328803, g: 0.3962264, b: 0.18465644, a: 1}
+    - _TreeInstanceColor: {r: 1, g: 1, b: 1, a: 1}
+    - _TreeInstanceScale: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &5542877050181216837

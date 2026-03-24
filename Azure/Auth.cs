@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
@@ -20,30 +21,49 @@ namespace AzureProxy
 
         // HTTP trigger function
         [Function("Auth")]
-        // Handles GET requests for Photon user authentication
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req)
+        // Handles GET/POST requests for Photon user authentication
+        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            // Retrieve token and id from query parameters
+            string? token = null;
+            string? id = null;
+
+            if (string.Equals(req.Method, "POST", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var body = await JsonSerializer.DeserializeAsync<AuthRequest>(
+                        req.Body,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    token = body?.Token;
+                    id = body?.Id ?? body?.UserId;
+                }
+                catch (JsonException)
+                {
+                    _logger.LogWarning("Request body is not valid JSON. Falling back to query parameters.");
+                }
+            }
+
+            // Retrieve token and id from query parameters (fallback)
             var queryParameters = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
-            // Get token and id from query parameters
-            string? token = queryParameters?["token"];
-            string? id = queryParameters?["id"];
-            _logger.LogInformation($"Inpud data: Token: {token}, Id: {id}");
+            token ??= queryParameters?["token"];
+            id ??= queryParameters?["id"];
+            _logger.LogInformation("Input data received. Id: {Id}, TokenPresent: {TokenPresent}", id, !string.IsNullOrWhiteSpace(token));
 
             // Validate input parameters
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(id))
             {
                 _logger.LogError("Token and Id are both required");
-                var badRequestResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                var badRequestResponse = req.CreateResponse(HttpStatusCode.OK);
                 // Return the expected error response if token or id is missing
-                badRequestResponse.WriteAsJsonAsync(new { ResultCode = 2, Message = "Token and Id are both required" });
+                await badRequestResponse.WriteAsJsonAsync(new { ResultCode = 2, Message = "Token and Id are both required" });
                 return badRequestResponse;
             }
 
             // Authenticate using Unity Authentication Service
-            bool isAuthenticated = AuthenticateWithUnity(token, id);
+            bool isAuthenticated = await AuthenticateWithUnity(token, id);
             // Create response based on authentication result
             var response = req.CreateResponse();
             if (isAuthenticated)
@@ -52,7 +72,7 @@ namespace AzureProxy
                 response.StatusCode = HttpStatusCode.OK;
                 // Return success response with user id
                 // and ResultCode 1 as per Photon requirements
-                response.WriteAsJsonAsync(new { ResultCode = 1, UserId = id });
+                await response.WriteAsJsonAsync(new { ResultCode = 1, UserId = id });
             }
             else
             {
@@ -60,14 +80,21 @@ namespace AzureProxy
                 // Set status code to OK even on failure as per Photon requirements
                 response.StatusCode = HttpStatusCode.OK;
                 // Return failure response with ResultCode 2
-                response.WriteAsJsonAsync(new { ResultCode = 2 });
+                await response.WriteAsJsonAsync(new { ResultCode = 2 });
             }
 
             return response;
         }
 
+        private sealed class AuthRequest
+        {
+            public string? Token { get; set; }
+            public string? Id { get; set; }
+            public string? UserId { get; set; }
+        }
+
         // Method to authenticate with Unity Authentication Service
-        private bool AuthenticateWithUnity(string token, string playerId)
+        private async Task<bool> AuthenticateWithUnity(string token, string playerId)
         {
             // Create REST client and request
             var client = new RestClient($"https://social.services.api.unity.com/v1/names/{playerId}");
@@ -78,7 +105,7 @@ namespace AzureProxy
 
             try
             {
-                var response = client.Execute(request);
+                var response = await client.ExecuteAsync(request);
                 return response.IsSuccessful;
             }
             catch (Exception ex)

@@ -508,6 +508,8 @@ GameObject:
   - component: {fileID: 1190842909}
   - component: {fileID: 1190842910}
   - component: {fileID: 1190842911}
+  - component: {fileID: 1190842913}
+  - component: {fileID: 1190842912}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -562,6 +564,33 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 1190842910}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &1190842912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1190842907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7ed916b969d9fc40ba7795bfabd34df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnityServiceManager
+--- !u!114 &1190842913
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1190842907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 683867a74c679fc4ba6c24b76a396db0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkManager
+  _serviceManager: {fileID: 1190842912}
+  _runnerPrefab: {fileID: 1621107633}
+  _roomName: Room_01
 --- !u!1 &1313116342
 GameObject:
   m_ObjectHideFlags: 0
@@ -613,8 +642,8 @@ MonoBehaviour:
   AutoClients: 1
   ClientStartDelay: 0.1
   ServerPort: 200
-  DefaultRoomName: ca2-test
-  InitialScenePath: Assets/_Game/Scenes/01_Sandbox/CA2_NetworkTest.unity
+  DefaultRoomName: 
+  InitialScenePath: 
   _currentStage: 0
   AutoConnectVirtualInstances: 1
   VirtualInstanceConnectDelay: 1

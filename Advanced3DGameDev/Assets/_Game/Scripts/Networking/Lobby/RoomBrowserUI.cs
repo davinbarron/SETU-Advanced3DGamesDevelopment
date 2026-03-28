@@ -108,7 +108,7 @@ public class RoomBrowserUI : MonoBehaviour
         panelRt.anchorMin = new Vector2(0.5f, 0.5f);
         panelRt.anchorMax = new Vector2(0.5f, 0.5f);
         panelRt.pivot     = new Vector2(0.5f, 0.5f);
-        panelRt.sizeDelta = new Vector2(620f, 560f);
+        panelRt.sizeDelta = new Vector2(520f, 460f);
         var panelImg      = _panel.AddComponent<Image>();
         panelImg.color    = new Color(0.1f, 0.1f, 0.15f, 0.97f);
 

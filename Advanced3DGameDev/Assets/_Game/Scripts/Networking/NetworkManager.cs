@@ -49,10 +49,13 @@ public class NetworkManager : MonoBehaviour
         var sceneManager = _runner.GetComponent<NetworkSceneManagerDefault>()
                         ?? _runner.gameObject.AddComponent<NetworkSceneManagerDefault>();
 
-        var authValues = new AuthenticationValues();
-        
-        authValues.AuthType = CustomAuthenticationType.Custom;
-        authValues.UserId = UnityServiceManager.PlayerId;
+
+        var authValues = new AuthenticationValues
+        {
+            AuthType = CustomAuthenticationType.Custom,
+            UserId = UnityServiceManager.PlayerId
+        };
+
         authValues.AddAuthParameter("id", UnityServiceManager.PlayerId);
         authValues.AddAuthParameter("token", UnityServiceManager.AccessToken);
 

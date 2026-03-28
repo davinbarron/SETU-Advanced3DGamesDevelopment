@@ -14,6 +14,7 @@ namespace Example
 		public PlayerInput Input;
 		public Transform   CameraPivot;
 		public Transform   CameraHandle;
+		public PlayerNameTag  NameTag;
 
 		[Header("Movement")]
 		public float MoveSpeed          = 10.0f;

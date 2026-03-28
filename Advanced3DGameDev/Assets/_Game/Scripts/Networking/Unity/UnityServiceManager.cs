@@ -14,15 +14,11 @@ public class UnityServiceManager : MonoBehaviour
     public static bool IsAuthenticated { get; private set; }
     public static string PlayerId { get; private set; }
     public static string AccessToken { get; private set; }
+    public static string PlayerName { get; set; }
 
     private void Awake()
     {
-        if (Instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
+        if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
@@ -32,7 +28,6 @@ public class UnityServiceManager : MonoBehaviour
         try
         {
             await UnityServices.InitializeAsync();
-            
             Debug.Log("Unity Services initialized. Attempting sign in...");
 
             PlayerAccountService.Instance.SignedIn += OnPlayerAccountSignedIn;
@@ -75,10 +70,12 @@ public class UnityServiceManager : MonoBehaviour
             );
 
             IsAuthenticated = true;
-            PlayerId = AuthenticationService.Instance.PlayerId;
-            AccessToken = AuthenticationService.Instance.AccessToken;
+            PlayerId        = AuthenticationService.Instance.PlayerId;
+            AccessToken     = AuthenticationService.Instance.AccessToken;
 
-            Debug.Log($"Auth successful. Player ID: {PlayerId}");
+            PlayerName = await AuthenticationService.Instance.GetPlayerNameAsync();
+            Debug.Log($"Auth successful. Player ID: {PlayerId}, Display Name: {PlayerName}");
+
             OnAuthenticated?.Invoke();
         }
         catch (RequestFailedException ex)

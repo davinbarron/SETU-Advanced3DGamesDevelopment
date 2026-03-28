@@ -88,6 +88,13 @@ public class RoomBrowserUI : MonoBehaviour
             CanvasScaler.ScaleMode.ScaleWithScreenSize;
         canvasGo.AddComponent<GraphicRaycaster>();
 
+        // Event System
+        var esGo = new GameObject("EventSystem");
+        DontDestroyOnLoad(esGo);
+        esGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
+        esGo.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+        Debug.Log("EventSystem created by RoomBrowserUI.");
+
         // Backdrop
         var backdrop   = CreateUIObject("Backdrop", canvasGo.transform);
         StretchFull(backdrop);

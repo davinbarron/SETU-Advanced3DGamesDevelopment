@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 using Fusion;
@@ -5,28 +6,25 @@ using Fusion.Photon.Realtime;
 
 public class NetworkManager : MonoBehaviour
 {
+    public static NetworkManager Instance { get; private set; }
+
     [Header("References")]
     [SerializeField] private UnityServiceManager _serviceManager;
     [SerializeField] private NetworkRunner _runnerPrefab;
-
-    [Header("Room Configuration")]
-    [SerializeField] private string _roomName = "Room_01";
+    [SerializeField] private LobbyManager _lobbyManager;
 
     private NetworkRunner _runner;
+
+    private void Awake()
+    {
+        if (Instance != null) { Destroy(gameObject); return; }
+        Instance = this;
+    }
 
     private void Start()
     {
         _serviceManager.OnAuthenticated += OnAuthComplete;
         StartCoroutine(InitCoroutine());
-    }
-
-    private System.Collections.IEnumerator InitCoroutine()
-    {
-        var task = _serviceManager.InitializeAndSignIn();
-        yield return new WaitUntil(() => task.IsCompleted);
-
-        if (task.IsFaulted)
-            Debug.LogError($"InitializeAndSignIn faulted: {task.Exception}");
     }
 
     private void OnDestroy()
@@ -35,43 +33,79 @@ public class NetworkManager : MonoBehaviour
             _serviceManager.OnAuthenticated -= OnAuthComplete;
     }
 
-    private void OnAuthComplete()
+    private IEnumerator InitCoroutine()
     {
-        Debug.Log("Auth confirmed. Starting Fusion...");
-        _ = StartFusionSession();
+        var task = _serviceManager.InitializeAndSignIn();
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.IsFaulted)
+            Debug.LogError($"InitializeAndSignIn faulted: {task.Exception}");
     }
 
-    private async Task StartFusionSession()
+    private void OnAuthComplete()
+    {
+        Debug.Log("Auth confirmed. Connecting to lobby...");
+        _ = ConnectToLobby();
+    }
+
+    private async Task ConnectToLobby()
     {
         if (_runner == null)
             _runner = Instantiate(_runnerPrefab);
 
+        _runner.AddCallbacks(_lobbyManager);
+
+        var result = await _runner.JoinSessionLobby(
+            SessionLobby.Shared,
+            authentication: BuildAuthValues()
+        );
+
+        if (result.Ok)
+        {
+            Debug.Log("Connected to lobby.");
+            _lobbyManager.Initialise(_runner);
+        }
+        else
+        {
+            Debug.LogError($"Failed to connect to lobby: {result.ShutdownReason}");
+        }
+    }
+
+    // Called by LobbyManager when the player picks a room to create or join
+    public async Task StartSession(string roomName)
+    {
         var sceneManager = _runner.GetComponent<NetworkSceneManagerDefault>()
-                        ?? _runner.gameObject.AddComponent<NetworkSceneManagerDefault>();
+                           ?? _runner.gameObject.AddComponent<NetworkSceneManagerDefault>();
 
+        var result = await _runner.StartGame(new StartGameArgs
+        {
+            GameMode     = GameMode.Shared,
+            SessionName  = roomName,
+            SceneManager = sceneManager,
+            AuthValues   = BuildAuthValues()
+        });
 
-        var authValues = new AuthenticationValues
+        if (result.Ok)
+        {
+            Debug.Log($"Joined room '{roomName}' as {UnityServiceManager.PlayerId}");
+            _lobbyManager.OnSessionStarted();
+        }
+        else
+        {
+            Debug.LogError($"Failed to join room: {result.ShutdownReason}");
+        }
+    }
+
+    private AuthenticationValues BuildAuthValues()
+    {
+        var auth = new AuthenticationValues
         {
             AuthType = CustomAuthenticationType.Custom,
             UserId = UnityServiceManager.PlayerId
         };
 
-        authValues.AddAuthParameter("id", UnityServiceManager.PlayerId);
-        authValues.AddAuthParameter("token", UnityServiceManager.AccessToken);
-
-        Debug.Log($"Setting custom authentication parameters: user = {UnityServiceManager.PlayerId}, token length = {UnityServiceManager.AccessToken?.Length ?? 0}");
-
-        var result = await _runner.StartGame(new StartGameArgs()
-        {
-            GameMode = GameMode.Shared,
-            SessionName = _roomName,
-            SceneManager = sceneManager,
-            AuthValues = authValues
-        });
-
-        if (result.Ok)
-            Debug.Log($"Joined room '{_roomName}' successfully as {UnityServiceManager.PlayerId}");
-        else
-            Debug.LogError($"Failed to join Fusion room: {result.ShutdownReason}");
+        auth.AddAuthParameter("id",    UnityServiceManager.PlayerId);
+        auth.AddAuthParameter("token", UnityServiceManager.AccessToken);
+        return auth;
     }
 }

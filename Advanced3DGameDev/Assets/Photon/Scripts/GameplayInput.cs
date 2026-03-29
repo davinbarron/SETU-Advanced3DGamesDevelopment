@@ -13,5 +13,8 @@ namespace Example
 		public NetworkButtons Actions;
 
 		public const int JUMP_BUTTON = 0;
+		public static readonly int EMOTE_WAVE  = 1;
+		public static readonly int EMOTE_CHEER = 2;
+		public static readonly int EMOTE_TAUNT = 3;
 	}
 }

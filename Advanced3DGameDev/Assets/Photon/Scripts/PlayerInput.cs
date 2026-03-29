@@ -113,6 +113,10 @@ namespace Example
 				_accumulatedInput.MoveDirection = moveDirection.normalized;
 
 				_accumulatedInput.Actions.Set(GameplayInput.JUMP_BUTTON, keyboard.spaceKey.isPressed);
+
+				_accumulatedInput.Actions.Set(GameplayInput.EMOTE_WAVE,  keyboard.digit1Key.isPressed);
+				_accumulatedInput.Actions.Set(GameplayInput.EMOTE_CHEER, keyboard.digit2Key.isPressed);
+				_accumulatedInput.Actions.Set(GameplayInput.EMOTE_TAUNT, keyboard.digit3Key.isPressed);
 			}
 		}
 

@@ -48,6 +48,18 @@ namespace Example
 				}
 			}
 
+			// Emote detection — only InputAuthority detects and fires the RPC
+			// WasPressed compares current vs previous to catch a single press, not held
+			if (HasInputAuthority)
+			{
+				if (Input.CurrentInput.Actions.WasPressed(Input.PreviousInput.Actions, GameplayInput.EMOTE_WAVE))
+					Rpc_PlayEmote(EmoteType.Wave);
+				else if (Input.CurrentInput.Actions.WasPressed(Input.PreviousInput.Actions, GameplayInput.EMOTE_CHEER))
+					Rpc_PlayEmote(EmoteType.Cheer);
+				else if (Input.CurrentInput.Actions.WasPressed(Input.PreviousInput.Actions, GameplayInput.EMOTE_TAUNT))
+					Rpc_PlayEmote(EmoteType.Taunt);
+			}
+
 			// It feels better when the player falls quicker.
 			KCC.SetGravity(KCC.RealVelocity.y >= 0.0f ? UpGravity : DownGravity);
 
@@ -72,6 +84,14 @@ namespace Example
 			_moveVelocity = Vector3.Lerp(_moveVelocity, desiredMoveVelocity, acceleration * Runner.DeltaTime);
 
 			KCC.Move(_moveVelocity, jumpImpulse);
+		}
+
+		// Source = InputAuthority: only the owning player triggers this
+		// Targets = All: executes on every peer's copy of this object
+		[Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+		private void Rpc_PlayEmote(EmoteType emote)
+		{
+			NameTag.ShowEmote(emote);
 		}
 
 		private void LateUpdate()

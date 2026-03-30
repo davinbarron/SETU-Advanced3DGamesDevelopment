@@ -36,7 +36,7 @@ The [Networked] properties will be used for **persistent state**. These are valu
 
 ### RPCs
 
-TRhese are used for short lived or once off events.
+These are used for short lived or once off events.
 
 | RPC | Source | Target | Justification |
 |---|---|---|---|

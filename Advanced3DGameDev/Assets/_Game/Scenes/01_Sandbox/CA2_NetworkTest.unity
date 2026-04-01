@@ -549,13 +549,13 @@ MonoBehaviour:
   AutoClients: 1
   ClientStartDelay: 0.1
   ServerPort: 200
-  theUserID: 
-  theAccessToken: 
   DefaultRoomName: 
   InitialScenePath: 
   _currentStage: 0
   AutoConnectVirtualInstances: 1
   VirtualInstanceConnectDelay: 1
+  theUserID: 
+  theAccessToken: 
 --- !u!4 &773511698
 Transform:
   m_ObjectHideFlags: 0
@@ -630,7 +630,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99154da7a5e0b2244a74903785c4eb22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Example.GameplayManager
-  PlayerPrefab: {fileID: 1939601035671555496, guid: 7167fe2755d7e1a44a1ef5a7050d33c0, type: 3}
+  PlayerPrefab: {fileID: 3206988120537068961, guid: e8578b8817d4f204f806bb460bfdbfb7, type: 3}
 --- !u!114 &1190842911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -662,6 +662,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb3ad2daef61ad6439be40bb86bc24cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomBrowserUI
+  _defaultMaxPlayers: 4
 --- !u!114 &1190842915
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -674,7 +675,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66334e457b177cf48989e95f11a65470, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyManager
-  _roomBrowserUI: {fileID: 1190842914}
 --- !u!1 &1378583169
 GameObject:
   m_ObjectHideFlags: 0
@@ -767,7 +767,6 @@ GameObject:
   - component: {fileID: 1621107633}
   - component: {fileID: 1621107632}
   - component: {fileID: 1621107635}
-  - component: {fileID: 1621107636}
   - component: {fileID: 1621107638}
   - component: {fileID: 1621107637}
   m_Layer: 0
@@ -885,19 +884,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8edbe7108d8a43ab838cf8b8d9453df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Unity::Fusion.RunnerEnableVisibility
---- !u!114 &1621107636
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1621107631}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 476c18d4ef3b1454a8d85c3a3f4edfbe, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawner
-  _playerPrefab: {fileID: 3206988120537068961, guid: e8578b8817d4f204f806bb460bfdbfb7, type: 3}
 --- !u!114 &1621107637
 MonoBehaviour:
   m_ObjectHideFlags: 0

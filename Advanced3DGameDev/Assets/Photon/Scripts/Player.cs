@@ -91,6 +91,11 @@ namespace Example
 		[Rpc(RpcSources.InputAuthority, RpcTargets.All)]
 		private void Rpc_PlayEmote(EmoteType emote)
 		{
+			if (NameTag == null)
+			{
+				Debug.LogWarning("Rpc_PlayEmote: NameTag is not assigned on Player prefab.");
+				return;
+			}
 			NameTag.ShowEmote(emote);
 		}
 

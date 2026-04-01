@@ -1,81 +1,161 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Fusion;
 using Fusion.Photon.Realtime;
 using Fusion.Sockets;
 using UnityEngine;
 
+/// <summary>
+/// Joins a Fusion lobby (without entering a room) to receive the live session list.
+/// Call <see cref="ShowLobby"/> after authentication to open the browser.
+/// Call <see cref="JoinRoom"/> or <see cref="CreateRoom"/> to hand off to FusionBootstrap.
+/// </summary>
 public class LobbyManager : MonoBehaviour, INetworkRunnerCallbacks
 {
-    public static LobbyManager Instance { get; private set; }
+    // -------------------------------------------------------------------------
+    // Events
+    // -------------------------------------------------------------------------
 
-    [SerializeField] private RoomBrowserUI _roomBrowserUI;
-
+    /// <summary>Fired whenever Fusion delivers a fresh session list.</summary>
     public event Action<List<SessionInfo>> OnRoomsUpdated;
+
+    /// <summary>Fired once the lobby connection is established and rooms can be created or joined.</summary>
     public event Action OnLobbyReady;
 
+    // -------------------------------------------------------------------------
+    // Public state
+    // -------------------------------------------------------------------------
+
+    /// <summary>True once the lobby runner has successfully connected.</summary>
     public bool IsReady { get; private set; }
 
-    private NetworkRunner _runner;
+    // -------------------------------------------------------------------------
+    // Private state
+    // -------------------------------------------------------------------------
 
-    private void Awake()
+    private NetworkRunner   _lobbyRunner;
+    private FusionBootstrap _bootstrap;
+    private string          _playerId;
+    private string          _accessToken;
+
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Initialise the manager and start listening for rooms.
+    /// Called by <see cref="UnityServicesManager"/> right after sign-in.
+    /// </summary>
+    public void ShowLobby(FusionBootstrap bootstrap, string playerId, string accessToken)
     {
-        if (Instance != null) { Destroy(gameObject); return; }
-        Instance = this;
+        _bootstrap   = bootstrap;
+        _playerId    = playerId;
+        _accessToken = accessToken;
+
+        StartCoroutine(StartLobbyRunner());
     }
 
-    // Called by NetworkManager once lobby connection is established
-    public void Initialise(NetworkRunner runner)
+    /// <summary>Join an existing room by name and hand control to FusionBootstrap.</summary>
+    public void JoinRoom(string roomName)
     {
-        _runner = runner;
-        IsReady = true;
-        OnLobbyReady?.Invoke();
-        Debug.Log("LobbyManager initialised.");
+        StartCoroutine(ConnectToRoom(roomName));
     }
 
-    public void OnSessionStarted()
-    {
-        _roomBrowserUI.Hide();
-    }
-
+    /// <summary>Create (or re-create) a room with the given name.</summary>
     public void CreateRoom(string roomName)
     {
         if (string.IsNullOrWhiteSpace(roomName))
-            roomName = $"Room_{UnityEngine.Random.Range(1000, 9999)}";
+            roomName = Guid.NewGuid().ToString("N").Substring(0, 8);
 
-        _ = NetworkManager.Instance.StartSession(roomName);
+        StartCoroutine(ConnectToRoom(roomName));
     }
 
-    public void JoinRoom(string roomName)
+    // -------------------------------------------------------------------------
+    // Internal helpers
+    // -------------------------------------------------------------------------
+
+    private IEnumerator StartLobbyRunner()
     {
-        _ = NetworkManager.Instance.StartSession(roomName);
+        var go = new GameObject("LobbyRunner");
+        DontDestroyOnLoad(go);
+        _lobbyRunner = go.AddComponent<NetworkRunner>();
+        _lobbyRunner.AddCallbacks(this);
+
+        var auth = BuildAuthValues();
+
+        // Positional args: (SessionLobby, string lobbyName, AuthenticationValues, ...)
+        var task = _lobbyRunner.JoinSessionLobby(SessionLobby.Shared, null, auth);
+
+        while (!task.IsCompleted)
+            yield return null;
+
+        if (task.IsFaulted)
+        {
+            Debug.LogError($"[LobbyManager] Failed to join lobby: {task.Exception}");
+            Destroy(go);
+            yield break;
+        }
+
+        IsReady = true;
+        OnLobbyReady?.Invoke();
     }
 
-    // ---- INetworkRunnerCallbacks ----
+    private IEnumerator ConnectToRoom(string roomName)
+    {
+        if (_lobbyRunner != null && _lobbyRunner.IsRunning)
+        {
+            var shutdownTask = _lobbyRunner.Shutdown();
+            while (!shutdownTask.IsCompleted)
+                yield return null;
+        }
+
+        if (_lobbyRunner != null)
+        {
+            Destroy(_lobbyRunner.gameObject);
+            _lobbyRunner = null;
+        }
+
+        _bootstrap.theUserID      = _playerId;
+        _bootstrap.theAccessToken = _accessToken;
+        _bootstrap.DefaultRoomName = roomName;
+        _bootstrap.StartSharedClient();
+    }
+
+    private AuthenticationValues BuildAuthValues()
+    {
+        var auth = new AuthenticationValues();
+        auth.AuthType = CustomAuthenticationType.Custom;
+        auth.AddAuthParameter("id",    _playerId);
+        auth.AddAuthParameter("token", _accessToken);
+        return auth;
+    }
+
+    // -------------------------------------------------------------------------
+    // INetworkRunnerCallbacks
+    // -------------------------------------------------------------------------
 
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
-        Debug.Log($"Session list updated: {sessionList.Count} room(s)");
         OnRoomsUpdated?.Invoke(sessionList);
     }
 
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
-    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
-    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
+    public void OnConnectedToServer(NetworkRunner runner) { }
+    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
+    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
+    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
+    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
+    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
     public void OnInput(NetworkRunner runner, NetworkInput input) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-    public void OnConnectedToServer(NetworkRunner runner) { }
-    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
-    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
-    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
-    public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
-    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
-    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
-    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
+    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
+    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnSceneLoadDone(NetworkRunner runner) { }
     public void OnSceneLoadStart(NetworkRunner runner) { }
-    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
-    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
+    public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
 }

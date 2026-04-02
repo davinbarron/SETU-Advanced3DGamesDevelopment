@@ -28,6 +28,16 @@ namespace Example
 
 		[Networked]
 		private Vector3 _moveVelocity { get; set; }
+		[Networked] 
+		public int Score { get; set; }
+
+		public void AddScore(int amount)
+		{
+			// Only the client with StateAuthority writes the score
+			if (!HasStateAuthority) return;
+			Score += amount;
+			Debug.Log($"Player {Object.InputAuthority} scored! Total: {Score}");
+		}
 
 		public override void FixedUpdateNetwork()
 		{

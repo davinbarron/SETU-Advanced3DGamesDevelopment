@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Fusion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +14,9 @@ public class GameHUD
     private TMP_Text   _phaseLabel;
     private TMP_Text   _timerLabel;
     private GamePhase  _currentPhase;
+    private GameObject _scorePanel;
+    private Transform  _scoreContainer;
+    private List<TMP_Text> _scoreLabels = new List<TMP_Text>();
 
     public void Build()
     {
@@ -45,6 +50,84 @@ public class GameHUD
 
         _phaseLabel = CreateLabel(panel.transform, "Waiting...", 14f, FontStyles.Normal, new Color(0.75f, 0.75f, 0.75f));
         _timerLabel = CreateLabel(panel.transform, "0:00", 30f, FontStyles.Bold, Color.white);
+
+        BuildScorePanel();
+    }
+
+    private void BuildScorePanel()
+    {
+        _scorePanel = CreateUIObject("ScorePanel", _root.transform);
+        var rt = _scorePanel.GetComponent<RectTransform>();
+        rt.anchorMin        = new Vector2(0f, 1f);
+        rt.anchorMax        = new Vector2(0f, 1f);
+        rt.pivot            = new Vector2(0f, 1f);
+        rt.sizeDelta        = new Vector2(200f, 200f);
+        rt.anchoredPosition = new Vector2(10f, -10f);
+
+        var bg    = _scorePanel.AddComponent<Image>();
+        bg.color  = new Color(0f, 0f, 0f, 0.55f);
+
+        var layout     = _scorePanel.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(10, 10, 8, 8);
+        layout.spacing = 4f;
+        layout.childForceExpandWidth  = true;
+        layout.childForceExpandHeight = false;
+
+        var header = CreateUIObject("Header", _scorePanel.transform);
+        header.AddComponent<LayoutElement>().preferredHeight = 24f;
+        var headerText       = header.AddComponent<TextMeshProUGUI>();
+        headerText.text      = "SCORES";
+        headerText.fontSize  = 13f;
+        headerText.fontStyle = FontStyles.Bold;
+        headerText.color     = new Color(0.75f, 0.75f, 0.75f);
+        headerText.alignment = TextAlignmentOptions.Center;
+        headerText.raycastTarget = false;
+
+        _scoreContainer = CreateUIObject("Container", _scorePanel.transform).transform;
+        _scorePanel.SetActive(false);
+    }
+
+    public void UpdateScores(NetworkRunner runner)
+    {
+        if (_scorePanel == null) return;
+        if (_currentPhase != GamePhase.Playing && _currentPhase != GamePhase.GameOver)
+        {
+            _scorePanel.SetActive(false);
+            return;
+        }
+
+        _scorePanel.SetActive(true);
+
+        // Get all players
+        var players = new List<Example.Player>();
+        runner.GetAllBehaviours(players);
+
+        // Ensure we have enough labels
+        while (_scoreLabels.Count < players.Count)
+        {
+            var labelGo = CreateUIObject($"Score_{_scoreLabels.Count}", _scoreContainer);
+            labelGo.AddComponent<LayoutElement>().preferredHeight = 28f;
+            var t       = labelGo.AddComponent<TextMeshProUGUI>();
+            t.fontSize  = 14f;
+            t.color     = Color.white;
+            t.alignment = TextAlignmentOptions.MidlineLeft;
+            t.raycastTarget = false;
+            _scoreLabels.Add(t);
+        }
+
+        // Hide excess labels
+        for (int i = 0; i < _scoreLabels.Count; i++)
+            _scoreLabels[i].gameObject.SetActive(i < players.Count);
+
+        // Update each label
+        for (int i = 0; i < players.Count; i++)
+        {
+            string name  = players[i].NameTag != null
+                ? players[i].NameTag.NickName.Value
+                : $"Player {i + 1}";
+                
+            _scoreLabels[i].text = $"{name}: {players[i].Score}";
+        }
     }
 
     public void UpdatePhase(GamePhase phase)

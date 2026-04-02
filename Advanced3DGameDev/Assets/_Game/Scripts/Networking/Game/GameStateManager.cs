@@ -88,6 +88,8 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
                     break;
             }
         }
+
+        _hud.UpdateScores(Runner);
     }
 
     private void TryStartRound()

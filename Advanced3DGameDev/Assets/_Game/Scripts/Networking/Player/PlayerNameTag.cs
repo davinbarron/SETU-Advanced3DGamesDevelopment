@@ -43,7 +43,10 @@ public class PlayerNameTag : NetworkBehaviour
 
         if (HasStateAuthority)
         {
-            NickName = UnityServiceManager.PlayerName ?? $"Player_{Random.Range(1000, 9999)}";
+            string name = PlayerPrefs.GetString("PlayerName", UnityServiceManager.PlayerName);
+            NickName = string.IsNullOrEmpty(name)
+                ? $"Player_{Random.Range(1000, 9999)}"
+                : name;
         }
 
         ApplyNickName();

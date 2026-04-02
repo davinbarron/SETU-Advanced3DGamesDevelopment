@@ -9,6 +9,7 @@ namespace Fusion {
   using System.Linq;
   using Statistics;
   using UnityEngine.Serialization;
+  using Fusion.Photon.Realtime;
 
 #if UNITY_EDITOR
   using UnityEditor;
@@ -149,6 +150,9 @@ namespace Fusion {
     /// </summary>
     [DrawIf(nameof(IsMPPMEnabled), true)] 
     public float VirtualInstanceConnectDelay = 1f;
+
+    public string theUserID;
+    public string theAccessToken;
     
     /// <summary>
     /// Indicates which step of the startup process <see cref="FusionBootstrap"/> is currently in.
@@ -244,8 +248,8 @@ namespace Fusion {
 
       switch (StartMode) {
         case StartModes.Manual:
-          // skip
-          return;
+            // skip
+            return;
         case StartModes.Automatic: {
           if (TryGetSceneRef(out var sceneRef)) {
             int clientCount;
@@ -633,36 +637,51 @@ namespace Fusion {
       CurrentStage = Stage.AllConnected;
     }
 
-    protected virtual Task InitializeNetworkRunner(NetworkRunner runner, GameMode gameMode, NetAddress address, SceneRef scene, Action<NetworkRunner> onGameStarted, 
-      INetworkRunnerUpdater updater = null) {
+    protected virtual Task InitializeNetworkRunner(NetworkRunner runner, GameMode gameMode, NetAddress address, SceneRef scene, Action<NetworkRunner> onGameStarted,
+      INetworkRunnerUpdater updater = null)
+    {
 
-      var sceneManager = runner.GetComponent<INetworkSceneManager>();
-      if (sceneManager == null) {
-        Debug.Log($"NetworkRunner does not have any component implementing {nameof(INetworkSceneManager)} interface, adding {nameof(NetworkSceneManagerDefault)}.", runner);
-        sceneManager = runner.gameObject.AddComponent<NetworkSceneManagerDefault>();
-      }
+        var sceneManager = runner.GetComponent<INetworkSceneManager>();
+        if (sceneManager == null)
+        {
+            Debug.Log($"NetworkRunner does not have any component implementing {nameof(INetworkSceneManager)} interface, adding {nameof(NetworkSceneManagerDefault)}.", runner);
+            sceneManager = runner.gameObject.AddComponent<NetworkSceneManagerDefault>();
+        }
 
-      var objectProvider = runner.GetComponent<INetworkObjectProvider>();
-      if (objectProvider == null) {
-        Debug.Log($"NetworkRunner does not have any component implementing {nameof(INetworkObjectProvider)} interface, adding {nameof(NetworkObjectProviderDefault)}.", runner);
-        objectProvider = runner.gameObject.AddComponent<NetworkObjectProviderDefault>();
-      }
+        var objectProvider = runner.GetComponent<INetworkObjectProvider>();
+        if (objectProvider == null)
+        {
+            Debug.Log($"NetworkRunner does not have any component implementing {nameof(INetworkObjectProvider)} interface, adding {nameof(NetworkObjectProviderDefault)}.", runner);
+            objectProvider = runner.gameObject.AddComponent<NetworkObjectProviderDefault>();
+        }
 
-      var sceneInfo = new NetworkSceneInfo();
-      if (scene.IsValid) {
-        sceneInfo.AddSceneRef(scene, LoadSceneMode.Additive);
-      }
+        var sceneInfo = new NetworkSceneInfo();
+        if (scene.IsValid)
+        {
+            sceneInfo.AddSceneRef(scene, LoadSceneMode.Additive);
+        }
 
-      return runner.StartGame(new StartGameArgs {
-        GameMode       = gameMode,
-        Address        = address,
-        Scene          = sceneInfo,
-        SessionName    = DefaultRoomName,
-        OnGameStarted    = onGameStarted,
-        SceneManager   = sceneManager,
-        Updater        = updater,
-        ObjectProvider = objectProvider,
-      });
+        // Create a new AuthenticationValues
+        AuthenticationValues authentication = new AuthenticationValues();
+
+        // Setup
+        authentication.AuthType = CustomAuthenticationType.Custom;
+        Debug.Log($"Setting custom authentication parameters: user = {theUserID}, token = {theAccessToken}");
+        authentication.AddAuthParameter("id", theUserID);
+        authentication.AddAuthParameter("token", theAccessToken);
+
+        return runner.StartGame(new StartGameArgs
+        {
+            GameMode = gameMode,
+            Address = address,
+            Scene = sceneInfo,
+            SessionName = DefaultRoomName,
+            OnGameStarted = onGameStarted,
+            SceneManager = sceneManager,
+            Updater = updater,
+            ObjectProvider = objectProvider,
+            AuthValues = authentication
+        });
     }
     
     private static bool IsMPPMEnabled => FusionMppm.Status != FusionMppmStatus.Disabled;

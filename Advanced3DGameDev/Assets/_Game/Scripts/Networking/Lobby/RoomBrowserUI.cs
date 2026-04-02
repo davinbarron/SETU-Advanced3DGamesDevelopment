@@ -4,24 +4,44 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Builds and manages the room browser panel entirely in code � no prefab required.
+/// Attach this to the same GameObject as <see cref="LobbyManager"/> (or any persistent GO).
+/// </summary>
 [RequireComponent(typeof(LobbyManager))]
 public class RoomBrowserUI : MonoBehaviour
 {
-    private LobbyManager   _lobbyManager;
-    private GameObject     _panel;
-    private Transform      _rowContainer;
-    private TMP_InputField _nameInput;
-    private TMP_InputField _roomNameInput;
-    private TMP_Text       _statusLabel;
-    private Button         _createButton;
+    // -------------------------------------------------------------------------
+    // Inspector
+    // -------------------------------------------------------------------------
 
-    private readonly List<RoomListItem> _rows = new List<RoomListItem>();
+    [Tooltip("Maximum players allowed when creating a new room.")]
+    [SerializeField] private int _defaultMaxPlayers = 4;
+
+    // -------------------------------------------------------------------------
+    // Private UI references (built in Awake)
+    // -------------------------------------------------------------------------
+
+    private Canvas          _canvas;
+    private GameObject      _panel;
+    private Transform       _rowContainer;
+    private TMP_InputField  _roomNameInput;
+    private TMP_Text        _statusLabel;
+    private Button          _createButton;
+    private TMP_InputField  _nameInput;
+
+    private LobbyManager            _lobbyManager;
+    private List<RoomListItem>      _rows = new List<RoomListItem>();
+
+    // -------------------------------------------------------------------------
+    // Unity lifecycle
+    // -------------------------------------------------------------------------
 
     private void Awake()
     {
         _lobbyManager = GetComponent<LobbyManager>();
-        _lobbyManager.OnLobbyReady   += OnLobbyReady;
         _lobbyManager.OnRoomsUpdated += RefreshRoomList;
+        _lobbyManager.OnLobbyReady   += OnLobbyReady;
 
         BuildUI();
         SetStatus("Connecting to lobby...");
@@ -29,41 +49,65 @@ public class RoomBrowserUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (_lobbyManager == null) return;
-        _lobbyManager.OnLobbyReady   -= OnLobbyReady;
-        _lobbyManager.OnRoomsUpdated -= RefreshRoomList;
+        if (_lobbyManager != null)
+        {
+            _lobbyManager.OnRoomsUpdated -= RefreshRoomList;
+            _lobbyManager.OnLobbyReady   -= OnLobbyReady;
+        }
     }
 
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
+
+    /// <summary>Show the browser panel.</summary>
+    public void Show() => _panel.SetActive(true);
+
+    /// <summary>Hide the browser panel (e.g. after joining a room).</summary>
     public void Hide() => _panel.SetActive(false);
 
-    private void OnLobbyReady()
-    {
-        _createButton.interactable = true;
-        SetStatus("Connected — create or join a room.");
-    }
+    // -------------------------------------------------------------------------
+    // Room list
+    // -------------------------------------------------------------------------
 
     private void RefreshRoomList(List<SessionInfo> sessions)
     {
+        // Remove old rows.
         foreach (var row in _rows)
             if (row != null) Destroy(row.gameObject);
         _rows.Clear();
 
         if (sessions == null || sessions.Count == 0)
         {
-            SetStatus("No open rooms. Create one to get started!");
+            SetStatus("No open rooms found. Create one!");
             return;
         }
 
-        SetStatus($"{sessions.Count} room(s) available.");
+        SetStatus($"{sessions.Count} room(s) available");
 
         foreach (var session in sessions)
         {
             if (!session.IsVisible) continue;
-            var captured = session.Name;
+
+            var capturedName = session.Name;
             var item = RoomListItem.Create(_rowContainer, session,
-                onJoin: () => _lobbyManager.JoinRoom(captured));
+                onJoin: () =>
+                {
+                    Hide();
+                    _lobbyManager.JoinRoom(capturedName);
+                });
             _rows.Add(item);
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Button handlers
+    // -------------------------------------------------------------------------
+
+    private void OnLobbyReady()
+    {
+        _createButton.interactable = true;
+        SetStatus("Connected: create or join a room.");
     }
 
     private void OnCreateClicked()
@@ -73,8 +117,14 @@ public class RoomBrowserUI : MonoBehaviour
             ? UnityServiceManager.PlayerName
             : _nameInput.text.Trim();
 
-        _lobbyManager.CreateRoom(_roomNameInput.text.Trim());
+        string roomName = _roomNameInput.text.Trim();
+        Hide();
+        _lobbyManager.CreateRoom(roomName);
     }
+
+    // -------------------------------------------------------------------------
+    // UI construction
+    // -------------------------------------------------------------------------
 
     private void BuildUI()
     {
@@ -158,6 +208,7 @@ public class RoomBrowserUI : MonoBehaviour
         _createButton.onClick.AddListener(OnCreateClicked);
     }
 
+    // ---- Scroll view helper ----
     private GameObject BuildScrollView(Transform parent, float height)
     {
         var scrollGo   = CreateUIObject("ScrollView", parent);
@@ -193,6 +244,7 @@ public class RoomBrowserUI : MonoBehaviour
         return scrollGo;
     }
 
+    // ---- InputField helper ----
     private static TMP_InputField BuildInputField(Transform parent, string placeholder, float width)
     {
         var go = CreateUIObject("InputField", parent);
@@ -229,6 +281,7 @@ public class RoomBrowserUI : MonoBehaviour
         return field;
     }
 
+    // ---- Button helper ----
     private static Button BuildButton(Transform parent, string label, Color color, float width)
     {
         var go = CreateUIObject("Button", parent);
@@ -293,6 +346,7 @@ public class RoomBrowserUI : MonoBehaviour
         return go;
     }
 
+    // ---- Utility ----
     private static GameObject CreateUIObject(string name, Transform parent)
     {
         var go = new GameObject(name, typeof(RectTransform));

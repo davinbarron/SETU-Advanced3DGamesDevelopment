@@ -11,48 +11,45 @@ public class GameHUD
     private GameObject _root;
     private TMP_Text   _phaseLabel;
     private TMP_Text   _timerLabel;
+    private GamePhase  _currentPhase;
 
     public void Build()
     {
         var canvasGo = new GameObject("GameHUD");
         Object.DontDestroyOnLoad(canvasGo);
 
-        var canvas        = canvasGo.AddComponent<Canvas>();
+        var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 5;
-        canvasGo.AddComponent<CanvasScaler>().uiScaleMode =
-            CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
 
         _root = canvasGo;
 
-        // Panel anchored to top-centre
         var panel   = CreateUIObject("Panel", canvasGo.transform);
         var panelRt = panel.GetComponent<RectTransform>();
-        panelRt.anchorMin        = new Vector2(0.5f, 1f);
-        panelRt.anchorMax        = new Vector2(0.5f, 1f);
-        panelRt.pivot            = new Vector2(0.5f, 1f);
-        panelRt.sizeDelta        = new Vector2(320f, 80f);
+        panelRt.anchorMin = new Vector2(0.5f, 1f);
+        panelRt.anchorMax = new Vector2(0.5f, 1f);
+        panelRt.pivot     = new Vector2(0.5f, 1f);
+        panelRt.sizeDelta = new Vector2(320f, 80f);
         panelRt.anchoredPosition = new Vector2(0f, -10f);
 
-        var panelImg   = panel.AddComponent<Image>();
+        var panelImg = panel.AddComponent<Image>();
         panelImg.color = new Color(0f, 0f, 0f, 0.55f);
 
-        var layout     = panel.AddComponent<VerticalLayoutGroup>();
+        var layout = panel.AddComponent<VerticalLayoutGroup>();
         layout.padding = new RectOffset(12, 12, 8, 8);
         layout.spacing = 4f;
         layout.childForceExpandWidth  = true;
         layout.childForceExpandHeight = false;
         layout.childAlignment         = TextAnchor.UpperCenter;
 
-        _phaseLabel = CreateLabel(panel.transform, "Waiting for players...",
-            14f, FontStyles.Normal, new Color(0.75f, 0.75f, 0.75f));
-
-        _timerLabel = CreateLabel(panel.transform, "1:00",
-            30f, FontStyles.Bold, Color.white);
+        _phaseLabel = CreateLabel(panel.transform, "Waiting...", 14f, FontStyles.Normal, new Color(0.75f, 0.75f, 0.75f));
+        _timerLabel = CreateLabel(panel.transform, "0:00", 30f, FontStyles.Bold, Color.white);
     }
 
     public void UpdatePhase(GamePhase phase)
     {
+        _currentPhase = phase;
         if (_phaseLabel == null) return;
 
         switch (phase)
@@ -60,6 +57,10 @@ public class GameHUD
             case GamePhase.Waiting:
                 _phaseLabel.text  = "Waiting for players...";
                 _timerLabel.color = new Color(0.75f, 0.75f, 0.75f);
+                break;
+            case GamePhase.Countdown:
+                _phaseLabel.text  = "Get Ready!";
+                _timerLabel.color = Color.yellow;
                 break;
             case GamePhase.Playing:
                 _phaseLabel.text  = "Round in progress";
@@ -75,28 +76,38 @@ public class GameHUD
     public void UpdateTimer(float timeRemaining)
     {
         if (_timerLabel == null) return;
-        int minutes = Mathf.FloorToInt(timeRemaining / 60f);
-        int seconds = Mathf.FloorToInt(timeRemaining % 60f);
-        _timerLabel.text = $"{minutes}:{seconds:00}";
+
+        if (_currentPhase == GamePhase.Countdown)
+        {
+            // Show big whole numbers during countdown
+            int ceilSeconds = Mathf.CeilToInt(timeRemaining);
+            float pulse = 1.0f + timeRemaining % 1.0f * 0.2f;
+            _timerLabel.transform.localScale = new Vector3(pulse, pulse, 1f);
+            _timerLabel.text = ceilSeconds > 0 ? ceilSeconds.ToString() : "GO!";
+        }
+        else
+        {
+            // Show standard clock format during play
+            int minutes = Mathf.FloorToInt(timeRemaining / 60f);
+            int seconds = Mathf.FloorToInt(timeRemaining % 60f);
+            _timerLabel.text = $"{minutes}:{seconds:00}";
+        }
     }
 
     public void Destroy()
     {
-        if (_root != null)
-            Object.Destroy(_root);
+        if (_root != null) Object.Destroy(_root);
     }
 
-    private static TMP_Text CreateLabel(Transform parent, string text,
-        float fontSize, FontStyles style, Color color)
+    private static TMP_Text CreateLabel(Transform parent, string text, float fontSize, FontStyles style, Color color)
     {
         var go = CreateUIObject("Label", parent);
         go.AddComponent<LayoutElement>().preferredHeight = 32f;
-
-        var t       = go.AddComponent<TextMeshProUGUI>();
-        t.text      = text;
-        t.fontSize  = fontSize;
+        var t = go.AddComponent<TextMeshProUGUI>();
+        t.text = text;
+        t.fontSize = fontSize;
         t.fontStyle = style;
-        t.color     = color;
+        t.color = color;
         t.alignment = TextAlignmentOptions.Center;
         t.raycastTarget = false;
         return t;

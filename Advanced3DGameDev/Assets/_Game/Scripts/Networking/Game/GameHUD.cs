@@ -11,12 +11,15 @@ using UnityEngine.UI;
 public class GameHUD
 {
     private GameObject _root;
+    private GameObject _panel;
     private TMP_Text   _phaseLabel;
     private TMP_Text   _timerLabel;
     private GamePhase  _currentPhase;
     private GameObject _scorePanel;
     private Transform  _scoreContainer;
     private List<TMP_Text> _scoreLabels = new List<TMP_Text>();
+    private GameObject     _rankingsPanel;
+    private List<TMP_Text> _rankingLabels = new List<TMP_Text>();
 
     public void Build()
     {
@@ -30,28 +33,29 @@ public class GameHUD
 
         _root = canvasGo;
 
-        var panel   = CreateUIObject("Panel", canvasGo.transform);
-        var panelRt = panel.GetComponent<RectTransform>();
+        _panel = CreateUIObject("Panel", canvasGo.transform);
+        var panelRt = _panel.GetComponent<RectTransform>();
         panelRt.anchorMin = new Vector2(0.5f, 1f);
         panelRt.anchorMax = new Vector2(0.5f, 1f);
         panelRt.pivot     = new Vector2(0.5f, 1f);
         panelRt.sizeDelta = new Vector2(320f, 80f);
         panelRt.anchoredPosition = new Vector2(0f, -10f);
 
-        var panelImg = panel.AddComponent<Image>();
+        var panelImg = _panel.AddComponent<Image>();
         panelImg.color = new Color(0f, 0f, 0f, 0.55f);
 
-        var layout = panel.AddComponent<VerticalLayoutGroup>();
+        var layout = _panel.AddComponent<VerticalLayoutGroup>();
         layout.padding = new RectOffset(12, 12, 8, 8);
         layout.spacing = 4f;
         layout.childForceExpandWidth  = true;
         layout.childForceExpandHeight = false;
         layout.childAlignment         = TextAnchor.UpperCenter;
 
-        _phaseLabel = CreateLabel(panel.transform, "Waiting...", 14f, FontStyles.Normal, new Color(0.75f, 0.75f, 0.75f));
-        _timerLabel = CreateLabel(panel.transform, "0:00", 30f, FontStyles.Bold, Color.white);
+        _phaseLabel = CreateLabel(_panel.transform, "Waiting...", 14f, FontStyles.Normal, new Color(0.75f, 0.75f, 0.75f));
+        _timerLabel = CreateLabel(_panel.transform, "0:00", 30f, FontStyles.Bold, Color.white);
 
         BuildScorePanel();
+        BuildRankingsPanel();
     }
 
     private void BuildScorePanel()
@@ -85,6 +89,86 @@ public class GameHUD
 
         _scoreContainer = CreateUIObject("Container", _scorePanel.transform).transform;
         _scorePanel.SetActive(false);
+    }
+
+    private void BuildRankingsPanel()
+    {
+        _rankingsPanel = CreateUIObject("RankingsPanel", _root.transform);
+        var rt = _rankingsPanel.GetComponent<RectTransform>();
+        rt.anchorMin        = new Vector2(0.5f, 0.5f);
+        rt.anchorMax        = new Vector2(0.5f, 0.5f);
+        rt.pivot            = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta        = new Vector2(340f, 300f);
+        rt.anchoredPosition = Vector2.zero;
+
+        var bg    = _rankingsPanel.AddComponent<Image>();
+        bg.color  = new Color(0f, 0f, 0f, 0.85f);
+
+        var layout     = _rankingsPanel.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(16, 16, 16, 16);
+        layout.spacing = 8f;
+        layout.childForceExpandWidth  = true;
+        layout.childForceExpandHeight = false;
+        layout.childAlignment         = TextAnchor.UpperCenter;
+
+        // Title
+        var titleGo = CreateUIObject("Title", _rankingsPanel.transform);
+        titleGo.AddComponent<LayoutElement>().preferredHeight = 40f;
+        var titleText       = titleGo.AddComponent<TextMeshProUGUI>();
+        titleText.text      = "FINAL SCORES";
+        titleText.fontSize  = 24f;
+        titleText.fontStyle = FontStyles.Bold;
+        titleText.color     = Color.white;
+        titleText.alignment = TextAlignmentOptions.Center;
+        titleText.raycastTarget = false;
+
+        // Pre-build 4 ranking slots
+        for (int i = 0; i < 4; i++)
+        {
+            var row = CreateUIObject($"Rank_{i}", _rankingsPanel.transform);
+            row.AddComponent<LayoutElement>().preferredHeight = 44f;
+
+            var rowLayout     = row.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 8f;
+            rowLayout.childForceExpandWidth  = false;
+            rowLayout.childForceExpandHeight = false;
+            rowLayout.childAlignment         = TextAnchor.MiddleLeft;
+
+            // Rank badge background
+            var badgeGo  = CreateUIObject("Badge", row.transform);
+            var badgeLe  = badgeGo.AddComponent<LayoutElement>();
+            badgeLe.preferredWidth  = 50f;
+            badgeLe.preferredHeight = 36f;
+            var badgeImg = badgeGo.AddComponent<Image>();
+            badgeImg.color = RankColor(i);
+
+            // Badge text as child of badge background
+            var badgeTextGo = CreateUIObject("BadgeText", badgeGo.transform);
+            var badgeTextRt = badgeTextGo.GetComponent<RectTransform>();
+            badgeTextRt.anchorMin = Vector2.zero;
+            badgeTextRt.anchorMax = Vector2.one;
+            badgeTextRt.offsetMin = Vector2.zero;
+            badgeTextRt.offsetMax = Vector2.zero;
+            var badgeText       = badgeTextGo.AddComponent<TextMeshProUGUI>();
+            badgeText.text      = OrdinalRank(i + 1);
+            badgeText.fontSize  = 16f;
+            badgeText.fontStyle = FontStyles.Bold;
+            badgeText.color     = Color.white;
+            badgeText.alignment = TextAlignmentOptions.Center;
+            badgeText.raycastTarget = false;
+
+            // Name and score label
+            var labelGo = CreateUIObject("Label", row.transform);
+            labelGo.AddComponent<LayoutElement>().preferredHeight = 36f;
+            var t       = labelGo.AddComponent<TextMeshProUGUI>();
+            t.fontSize  = 18f;
+            t.color     = Color.white;
+            t.alignment = TextAlignmentOptions.MidlineLeft;
+            t.raycastTarget = false;
+            _rankingLabels.Add(t);
+        }
+
+        _rankingsPanel.SetActive(false);
     }
 
     public void UpdateScores(NetworkRunner runner)
@@ -135,6 +219,14 @@ public class GameHUD
         _currentPhase = phase;
         if (_phaseLabel == null) return;
 
+        // Show/hide rankings panel
+        if (_rankingsPanel != null)
+            _rankingsPanel.SetActive(false);
+
+        // Restore timer panel if it was hidden
+        if (_panel != null)
+            _panel.SetActive(true);
+
         switch (phase)
         {
             case GamePhase.Waiting:
@@ -174,6 +266,51 @@ public class GameHUD
             int minutes = Mathf.FloorToInt(timeRemaining / 60f);
             int seconds = Mathf.FloorToInt(timeRemaining % 60f);
             _timerLabel.text = $"{minutes}:{seconds:00}";
+        }
+    }
+
+    public void ShowRankings(List<(string name, int score, int rank)> rankings)
+    {
+        if (_rankingsPanel == null) return;
+
+        // Hide the timer panel — rankings replace it
+        if (_panel != null) _panel.SetActive(false);
+
+        _rankingsPanel.SetActive(true);
+
+        for (int i = 0; i < _rankingLabels.Count; i++)
+        {
+            if (i < rankings.Count)
+            {
+                _rankingLabels[i].gameObject.transform.parent.gameObject.SetActive(true);
+                _rankingLabels[i].text = $"{rankings[i].name}  —  {rankings[i].score} pts";
+            }
+            else
+            {
+                _rankingLabels[i].gameObject.transform.parent.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private static Color RankColor(int index)
+    {
+        switch (index)
+        {
+            case 0:  return new Color(1f,   0.84f, 0f,   1f); // Gold
+            case 1:  return new Color(0.75f,0.75f, 0.75f,1f); // Silver
+            case 2:  return new Color(0.8f, 0.5f,  0.2f, 1f); // Bronze
+            default: return new Color(0.3f, 0.3f,  0.3f, 1f); // Grey
+        }
+    }
+
+    private static string OrdinalRank(int rank)
+    {
+        switch (rank)
+        {
+            case 1: return "1st";
+            case 2: return "2nd";
+            case 3: return "3rd";
+            default: return $"{rank}th";
         }
     }
 

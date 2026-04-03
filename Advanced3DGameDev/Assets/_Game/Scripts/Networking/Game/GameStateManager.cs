@@ -19,18 +19,22 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     private const float RoundDuration     = 60f;
     private const float CountdownDuration = 5f;
-    private const int MinPlayers          = 2;
+    private const int   MinPlayers        = 2;
 
-    [Networked] public float TimeRemaining  { get; set; }
-    [Networked] public GamePhase Phase      { get; set; }
+    [Networked] public float     TimeRemaining { get; set; }
+    [Networked] public GamePhase Phase         { get; set; }
+    [Networked] public PlayerRef Winner        { get; set; }
 
     private ChangeDetector _changes;
-    private GameHUD         _hud;
+    private GameHUD        _hud;
+    private bool           _gameOverFired;
 
     public override void Spawned()
     {
-        Instance = this;
-        _changes = GetChangeDetector(ChangeDetector.Source.SimulationState);
+        Instance       = this;
+        _changes       = GetChangeDetector(ChangeDetector.Source.SimulationState);
+        _gameOverFired = false;
+
         Runner.AddCallbacks(this);
 
         _hud = new GameHUD();
@@ -39,11 +43,19 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         if (HasStateAuthority)
         {
             Phase         = GamePhase.Waiting;
-            TimeRemaining = 0;
+            TimeRemaining = 0f;
+            Winner        = PlayerRef.None;
         }
 
         _hud.UpdatePhase(Phase);
         _hud.UpdateTimer(TimeRemaining);
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        runner.RemoveCallbacks(this);
+        _hud?.Destroy();
+        Instance = null;
     }
 
     public override void FixedUpdateNetwork()
@@ -56,7 +68,7 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
             TimeRemaining -= Runner.DeltaTime;
             if (TimeRemaining <= 0f)
             {
-                Phase = GamePhase.Playing;
+                Phase         = GamePhase.Playing;
                 TimeRemaining = RoundDuration;
                 Debug.Log("GameStateManager: Match Started!");
             }
@@ -68,8 +80,26 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
             if (TimeRemaining <= 0f)
             {
                 TimeRemaining = 0f;
-                Phase = GamePhase.GameOver;
-                Debug.Log("GameStateManager: Round over.");
+                Phase         = GamePhase.GameOver;
+
+                // Determine winner — highest score wins
+                var players = new List<Example.Player>();
+                Runner.GetAllBehaviours(players);
+
+                Example.Player topPlayer = null;
+                foreach (var p in players)
+                {
+                    if (topPlayer == null || p.Score > topPlayer.Score)
+                        topPlayer = p;
+                }
+
+                Winner = topPlayer != null
+                    ? topPlayer.Object.InputAuthority
+                    : PlayerRef.None;
+
+                Rpc_GameOver(Winner);
+
+                Debug.Log($"GameStateManager: Round over. Winner: {Winner}");
             }
         }
     }
@@ -86,11 +116,48 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
                 case nameof(TimeRemaining):
                     _hud.UpdateTimer(TimeRemaining);
                     break;
+                case nameof(Winner):
+                    // Late-joining clients catch game over state
+                    if (Phase == GamePhase.GameOver)
+                        ShowFinalRankings();
+                    break;
             }
         }
 
         _hud.UpdateScores(Runner);
     }
+
+    // ---- RPC triggered by StateAuthority, runs on ALL peers. ----
+    
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void Rpc_GameOver(PlayerRef winner)
+    {
+        if (_gameOverFired) return;
+        _gameOverFired = true;
+
+        ShowFinalRankings();
+        Debug.Log($"Rpc_GameOver received. Winner: {winner}");
+    }
+
+    private void ShowFinalRankings()
+    {
+        var players = new List<Example.Player>();
+        Runner.GetAllBehaviours(players);
+
+        // Sort by score descending
+        var ranked = players
+            .OrderByDescending(p => p.Score)
+            .Select((p, index) => (
+                name:  p.NameTag != null ? p.NameTag.NickName.Value : $"Player {index + 1}",
+                score: p.Score,
+                rank:  index + 1
+            ))
+            .ToList();
+
+        _hud.ShowRankings(ranked);
+    }
+
+    // ---- Player count monitoring ----
 
     private void TryStartRound()
     {
@@ -99,8 +166,9 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         // Only start the countdown if we are currently waiting
         if (Phase == GamePhase.Waiting && Runner.ActivePlayers.Count() >= MinPlayers)
         {
-            Phase = GamePhase.Countdown;
+            Phase         = GamePhase.Countdown;
             TimeRemaining = CountdownDuration;
+            _gameOverFired = false;
             Debug.Log("GameStateManager: Starting countdown.");
         }
     }
@@ -113,8 +181,10 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         if ((Phase == GamePhase.Playing || Phase == GamePhase.Countdown) && 
             Runner.ActivePlayers.Count() < MinPlayers)
         {
-            Phase = GamePhase.Waiting;
-            TimeRemaining = 0;
+            Phase         = GamePhase.Waiting;
+            TimeRemaining = 0f;
+            Winner        = PlayerRef.None;
+            _gameOverFired = false;
             Debug.Log("GameStateManager: Match aborted - not enough players.");
         }
     }

@@ -43,9 +43,14 @@ namespace Example
 
 		public void ResetScore()
 		{
-			if (!HasStateAuthority) return;
-			Score = 0;
-			Debug.Log($"Player {Object.InputAuthority} score reset.");
+			if (HasStateAuthority)
+			{
+				Score = 0;
+				Debug.Log($"Player {Object.InputAuthority} score reset.");
+				return;
+			}
+
+			Rpc_ScoreReset();
 		}
 
 		// ---- NetworkBehaviour overrides ----
@@ -120,6 +125,13 @@ namespace Example
 				return;
 			}
 			NameTag.ShowEmote(emote);
+		}
+
+		[Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+		private void Rpc_ScoreReset()
+		{
+			Score = 0;
+			Debug.Log($"Player {Object.InputAuthority} score reset.");
 		}
 
 		// ---- LateUpdate for camera ----

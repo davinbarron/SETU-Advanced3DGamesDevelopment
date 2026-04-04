@@ -173,14 +173,16 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         Debug.Log("Rpc_StartRematch: Resetting round.");
 
-        // Reset scores on all players
-        var players = new List<Example.Player>();
-        Runner.GetAllBehaviours(players);
-        foreach (var p in players)
-            p.ResetScore();
-
         if (HasStateAuthority)
         {
+            // Reset scores for all players.
+            var players = new List<Example.Player>();
+            
+            Runner.GetAllBehaviours(players);
+
+            foreach (var p in players)
+                p.ResetScore();
+
             ResetRoundToWaiting();
 
             // Immediately try to start if enough players are still in room

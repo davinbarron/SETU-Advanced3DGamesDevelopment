@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Builds and manages the room browser panel entirely in code � no prefab required.
+/// Builds and manages the room browser panel entirely in code – no prefab required.
 /// Attach this to the same GameObject as <see cref="LobbyManager"/> (or any persistent GO).
 /// </summary>
 [RequireComponent(typeof(LobbyManager))]
@@ -44,6 +44,7 @@ public class RoomBrowserUI : MonoBehaviour
         _lobbyManager.OnLobbyReady   += OnLobbyReady;
 
         BuildUI();
+        Show();
         SetStatus("Connecting to lobby...");
     }
 
@@ -143,40 +144,45 @@ public class RoomBrowserUI : MonoBehaviour
         DontDestroyOnLoad(esGo);
         esGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
         esGo.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-        Debug.Log("EventSystem created by RoomBrowserUI.");
 
         // Backdrop
-        var backdrop   = CreateUIObject("Backdrop", canvasGo.transform);
-        StretchFull(backdrop);
-        var bgImg      = backdrop.AddComponent<Image>();
-        bgImg.color    = new Color(0f, 0f, 0f, 0.6f);
+        var backdrop = UIHelper.CreateUIObject("Backdrop", canvasGo.transform);
+        UIHelper.StretchFull(backdrop);
+        var bgImg = backdrop.AddComponent<Image>();
+        bgImg.color = new Color(0f, 0f, 0f, 0.6f);
         bgImg.raycastTarget = false;
 
         // Panel
-        _panel = CreateUIObject("Panel", canvasGo.transform);
-        var panelRt       = _panel.GetComponent<RectTransform>();
+        _panel = UIHelper.CreateUIObject("Panel", canvasGo.transform);
+        var panelRt = _panel.GetComponent<RectTransform>();
         panelRt.anchorMin = new Vector2(0.5f, 0.5f);
         panelRt.anchorMax = new Vector2(0.5f, 0.5f);
         panelRt.pivot     = new Vector2(0.5f, 0.5f);
         panelRt.sizeDelta = new Vector2(520f, 460f);
-        var panelImg      = _panel.AddComponent<Image>();
-        panelImg.color    = new Color(0.1f, 0.1f, 0.15f, 0.97f);
+        var panelImg = _panel.AddComponent<Image>();
+        panelImg.color = new Color(0.1f, 0.1f, 0.15f, 0.97f);
 
-        var layout     = _panel.AddComponent<VerticalLayoutGroup>();
+        var layout = _panel.AddComponent<VerticalLayoutGroup>();
         layout.padding = new RectOffset(16, 16, 16, 16);
         layout.spacing = 10f;
         layout.childForceExpandWidth  = true;
         layout.childForceExpandHeight = false;
 
         // Title
-        AddLabel(_panel.transform, "Room Browser", 28f, FontStyles.Bold,
-            TextAlignmentOptions.Center, 44f);
+        var titleLabel = UIHelper.CreateLabel(_panel.transform, "Room Browser", 28f, FontStyles.Bold,
+            Color.white);
+            
+        titleLabel.alignment = TextAlignmentOptions.Center;
 
         // Player name row
         var nameRow = CreateRow(_panel.transform, 44f);
-        AddLabel(nameRow.transform, "Your Name:", 16f,
-            FontStyles.Normal, TextAlignmentOptions.MidlineLeft, preferredWidth: 100f);
-        _nameInput = BuildInputField(nameRow.transform,
+
+        var nameLabel = UIHelper.CreateLabel(nameRow.transform, "Your Name:", 16f,
+            FontStyles.Normal, Color.white);
+
+        nameLabel.alignment = TextAlignmentOptions.MidlineLeft;
+        
+        _nameInput = UIHelper.BuildInputField(nameRow.transform,
             UnityServiceManager.PlayerName ?? "Player", 340f);
         _nameInput.onEndEdit.AddListener(val =>
         {
@@ -185,10 +191,10 @@ public class RoomBrowserUI : MonoBehaviour
         });
 
         // Status
-        var statusGo     = CreateUIObject("Status", _panel.transform);
-        var statusLe     = statusGo.AddComponent<LayoutElement>();
+        var statusGo = UIHelper.CreateUIObject("Status", _panel.transform);
+        var statusLe = statusGo.AddComponent<LayoutElement>();
         statusLe.preferredHeight = 24f;
-        _statusLabel     = statusGo.AddComponent<TextMeshProUGUI>();
+        _statusLabel = statusGo.AddComponent<TextMeshProUGUI>();
         _statusLabel.fontSize  = 13f;
         _statusLabel.color     = new Color(0.75f, 0.75f, 0.75f);
         _statusLabel.alignment = TextAlignmentOptions.Center;
@@ -201,8 +207,8 @@ public class RoomBrowserUI : MonoBehaviour
 
         // Create room row
         var createRow = CreateRow(_panel.transform, 48f);
-        _roomNameInput = BuildInputField(createRow.transform, "Room name (optional)...", 340f);
-        _createButton  = BuildButton(createRow.transform, "Create Room",
+        _roomNameInput = UIHelper.BuildInputField(createRow.transform, "Room name (optional)...", 340f);
+        _createButton  = UIHelper.BuildButton(createRow.transform, "Create Room",
             new Color(0.2f, 0.75f, 0.35f), 160f);
         _createButton.interactable = false;
         _createButton.onClick.AddListener(OnCreateClicked);
@@ -211,17 +217,17 @@ public class RoomBrowserUI : MonoBehaviour
     // ---- Scroll view helper ----
     private GameObject BuildScrollView(Transform parent, float height)
     {
-        var scrollGo   = CreateUIObject("ScrollView", parent);
+        var scrollGo = UIHelper.CreateUIObject("ScrollView", parent);
         var scrollRect = scrollGo.AddComponent<ScrollRect>();
         var scrollImg  = scrollGo.AddComponent<Image>();
         scrollImg.color = new Color(0.05f, 0.05f, 0.1f, 0.5f);
 
-        var viewport = CreateUIObject("Viewport", scrollGo.transform);
-        StretchFull(viewport);
+        var viewport = UIHelper.CreateUIObject("Viewport", scrollGo.transform);
+        UIHelper.StretchFull(viewport);
         viewport.AddComponent<RectMask2D>();
         scrollRect.viewport = viewport.GetComponent<RectTransform>();
 
-        var content   = CreateUIObject("Content", viewport.transform);
+        var content   = UIHelper.CreateUIObject("Content", viewport.transform);
         var contentRt = content.GetComponent<RectTransform>();
         contentRt.anchorMin = new Vector2(0f, 1f);
         contentRt.anchorMax = new Vector2(1f, 1f);
@@ -244,98 +250,9 @@ public class RoomBrowserUI : MonoBehaviour
         return scrollGo;
     }
 
-    // ---- InputField helper ----
-    private static TMP_InputField BuildInputField(Transform parent, string placeholder, float width)
-    {
-        var go = CreateUIObject("InputField", parent);
-        var le = go.AddComponent<LayoutElement>();
-        le.preferredWidth  = width;
-        le.preferredHeight = 40f;
-        go.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.2f, 1f);
-
-        var field = go.AddComponent<TMP_InputField>();
-
-        var textArea = CreateUIObject("TextArea", go.transform);
-        StretchFull(textArea);
-        textArea.AddComponent<RectMask2D>();
-        field.textViewport = textArea.GetComponent<RectTransform>();
-
-        var ph       = CreateUIObject("Placeholder", textArea.transform);
-        StretchFull(ph);
-        var phText   = ph.AddComponent<TextMeshProUGUI>();
-        phText.text  = placeholder;
-        phText.color = new Color(0.5f, 0.5f, 0.5f);
-        phText.fontSize = 14f;
-        phText.margin   = new Vector4(8, 0, 8, 0);
-        phText.raycastTarget = false;
-        field.placeholder = phText;
-
-        var txt       = CreateUIObject("Text", textArea.transform);
-        StretchFull(txt);
-        var inputText = txt.AddComponent<TextMeshProUGUI>();
-        inputText.color    = Color.white;
-        inputText.fontSize = 14f;
-        inputText.margin   = new Vector4(8, 0, 8, 0);
-        field.textComponent = inputText;
-
-        return field;
-    }
-
-    // ---- Button helper ----
-    private static Button BuildButton(Transform parent, string label, Color color, float width)
-    {
-        var go = CreateUIObject("Button", parent);
-        var le = go.AddComponent<LayoutElement>();
-        le.preferredWidth  = width;
-        le.preferredHeight = 40f;
-
-        var img   = go.AddComponent<Image>();
-        img.color = color;
-        var btn   = go.AddComponent<Button>();
-        btn.targetGraphic = img;
-        btn.colors = new ColorBlock
-        {
-            normalColor      = color,
-            highlightedColor = color * 1.2f,
-            pressedColor     = color * 0.7f,
-            disabledColor    = new Color(0.4f, 0.4f, 0.4f),
-            colorMultiplier  = 1f,
-            fadeDuration     = 0.1f
-        };
-
-        var lblGo = CreateUIObject("Label", go.transform);
-        StretchFull(lblGo);
-        var t     = lblGo.AddComponent<TextMeshProUGUI>();
-        t.text      = label;
-        t.fontSize  = 15f;
-        t.color     = Color.white;
-        t.alignment = TextAlignmentOptions.Center;
-        t.raycastTarget = false;
-
-        return btn;
-    }
-
-    private static void AddLabel(Transform parent, string text, float fontSize,
-        FontStyles style, TextAlignmentOptions alignment,
-        float preferredHeight = 30f, float preferredWidth = -1f)
-    {
-        var go = CreateUIObject("Label", parent);
-        var le = go.AddComponent<LayoutElement>();
-        le.preferredHeight = preferredHeight;
-        if (preferredWidth > 0f) le.preferredWidth = preferredWidth;
-
-        var t       = go.AddComponent<TextMeshProUGUI>();
-        t.text      = text;
-        t.fontSize  = fontSize;
-        t.fontStyle = style;
-        t.color     = Color.white;
-        t.alignment = alignment;
-        t.raycastTarget = false;
-    }
-
     private static GameObject CreateRow(Transform parent, float height)
     {
-        var go     = CreateUIObject("Row", parent);
+        var go     = UIHelper.CreateUIObject("Row", parent);
         var le     = go.AddComponent<LayoutElement>();
         le.preferredHeight = height;
         var hl     = go.AddComponent<HorizontalLayoutGroup>();
@@ -344,23 +261,6 @@ public class RoomBrowserUI : MonoBehaviour
         hl.childForceExpandHeight = false;
         hl.childAlignment = TextAnchor.MiddleLeft;
         return go;
-    }
-
-    // ---- Utility ----
-    private static GameObject CreateUIObject(string name, Transform parent)
-    {
-        var go = new GameObject(name, typeof(RectTransform));
-        go.transform.SetParent(parent, false);
-        return go;
-    }
-
-    private static void StretchFull(GameObject go)
-    {
-        var rt       = go.GetComponent<RectTransform>();
-        rt.anchorMin = Vector2.zero;
-        rt.anchorMax = Vector2.one;
-        rt.offsetMin = Vector2.zero;
-        rt.offsetMax = Vector2.zero;
     }
 
     private void SetStatus(string msg)

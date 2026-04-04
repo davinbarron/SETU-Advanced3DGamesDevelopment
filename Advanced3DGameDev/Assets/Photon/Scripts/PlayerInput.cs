@@ -83,6 +83,13 @@ namespace Example
 				_accumulatedInput = default;
 			}
 
+			if (GameStateManager.Instance != null && GameStateManager.Instance.Phase == GamePhase.GameOver)
+			{
+				Cursor.lockState = CursorLockMode.None;
+				Cursor.visible   = true;
+				return;
+			}
+
 			if (Application.isMobilePlatform == false || Application.isEditor == true)
 			{
 				// Input is tracked only if the cursor is locked.

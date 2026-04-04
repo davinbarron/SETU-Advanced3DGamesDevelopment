@@ -3,6 +3,7 @@ using Fusion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// Builds and manages the room browser panel entirely in code – no prefab required.
@@ -22,8 +23,8 @@ public class RoomBrowserUI : MonoBehaviour
     // Private UI references (built in Awake)
     // -------------------------------------------------------------------------
 
-    private Canvas          _canvas;
     private GameObject      _panel;
+    private GameObject      _canvasRoot;
     private Transform       _rowContainer;
     private TMP_InputField  _roomNameInput;
     private TMP_Text        _statusLabel;
@@ -54,6 +55,12 @@ public class RoomBrowserUI : MonoBehaviour
         {
             _lobbyManager.OnRoomsUpdated -= RefreshRoomList;
             _lobbyManager.OnLobbyReady   -= OnLobbyReady;
+        }
+
+        if (_canvasRoot != null)
+        {
+            Destroy(_canvasRoot);
+            _canvasRoot = null;
         }
     }
 
@@ -131,6 +138,7 @@ public class RoomBrowserUI : MonoBehaviour
     {
         // Canvas
         var canvasGo = new GameObject("RoomBrowserCanvas");
+        _canvasRoot = canvasGo;
         DontDestroyOnLoad(canvasGo);
         var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode    = RenderMode.ScreenSpaceOverlay;
@@ -140,10 +148,13 @@ public class RoomBrowserUI : MonoBehaviour
         canvasGo.AddComponent<GraphicRaycaster>();
 
         // Event System
-        var esGo = new GameObject("EventSystem");
-        DontDestroyOnLoad(esGo);
-        esGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
-        esGo.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+        if (EventSystem.current == null)
+        {
+            var esGo = new GameObject("EventSystem");
+            DontDestroyOnLoad(esGo);
+            esGo.AddComponent<EventSystem>();
+            esGo.AddComponent<StandaloneInputModule>();
+        }
 
         // Backdrop
         var backdrop = UIHelper.CreateUIObject("Backdrop", canvasGo.transform);

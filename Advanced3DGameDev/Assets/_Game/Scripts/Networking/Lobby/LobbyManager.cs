@@ -71,6 +71,22 @@ public class LobbyManager : MonoBehaviour, INetworkRunnerCallbacks
         StartCoroutine(ConnectToRoom(roomName));
     }
 
+    /// <summary>
+    /// Leaves the active match and returns the player to the room browser.
+    /// </summary>
+    public void ReturnToLobbyFromMatch()
+    {
+        if (_bootstrap != null)
+        {
+            // FusionBootstrap resets runners and returns to the initial scene.
+            // UnityServiceManager opens the lobby again.
+            _bootstrap.Shutdown();
+            return;
+        }
+
+        StartCoroutine(StartLobbyRunner());
+    }
+
     // -------------------------------------------------------------------------
     // Internal helpers
     // -------------------------------------------------------------------------
@@ -140,11 +156,11 @@ public class LobbyManager : MonoBehaviour, INetworkRunnerCallbacks
         OnRoomsUpdated?.Invoke(sessionList);
     }
 
-    public void OnConnectedToServer(NetworkRunner runner) { }
+    void INetworkRunnerCallbacks.OnConnectedToServer(NetworkRunner runner) { }
     public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
-    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
+    void INetworkRunnerCallbacks.OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
     public void OnInput(NetworkRunner runner, NetworkInput input) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }

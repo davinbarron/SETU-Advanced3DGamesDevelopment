@@ -24,10 +24,15 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Networked] public float     TimeRemaining { get; set; }
     [Networked] public GamePhase Phase         { get; set; }
     [Networked] public PlayerRef Winner        { get; set; }
+    [Networked] public int        RematchVotes    { get; set; }
+    [Networked] public int        TotalPlayers    { get; set; }
 
     private ChangeDetector _changes;
     private GameHUD        _hud;
     private bool           _gameOverFired;
+    private HashSet<PlayerRef>   _voters = new HashSet<PlayerRef>();
+
+    // ---- NetworkBehaviours ----
 
     public override void Spawned()
     {
@@ -38,13 +43,11 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         Runner.AddCallbacks(this);
 
         _hud = new GameHUD();
-        _hud.Build();
+        _hud.Build(HandleVoteRematchRequested, HandleLeaveRoomRequested);
 
         if (HasStateAuthority)
         {
-            Phase         = GamePhase.Waiting;
-            TimeRemaining = 0f;
-            Winner        = PlayerRef.None;
+            ResetRoundToWaiting();
         }
 
         _hud.UpdatePhase(Phase);
@@ -81,6 +84,7 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 TimeRemaining = 0f;
                 Phase         = GamePhase.GameOver;
+                TotalPlayers  = Runner.ActivePlayers.Count();
 
                 // Determine winner — highest score wins
                 var players = new List<Example.Player>();
@@ -117,17 +121,20 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
                     _hud.UpdateTimer(TimeRemaining);
                     break;
                 case nameof(Winner):
-                    // Late-joining clients catch game over state
                     if (Phase == GamePhase.GameOver)
                         ShowFinalRankings();
+                    break;
+                case nameof(RematchVotes):
+                    _hud.UpdateVoteStatus(RematchVotes, TotalPlayers);
                     break;
             }
         }
 
         _hud.UpdateScores(Runner);
+        _hud.Tick();
     }
 
-    // ---- RPC triggered by StateAuthority, runs on ALL peers. ----
+    // ---- RPCs ----
     
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void Rpc_GameOver(PlayerRef winner)
@@ -139,6 +146,89 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         Debug.Log($"Rpc_GameOver received. Winner: {winner}");
     }
 
+    /// <summary>
+    /// Runs only on StateAuthority — keeps vote counting authoritative.
+    /// </summary>
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void Rpc_CastVote(PlayerRef voter)
+    {
+        if (!HasStateAuthority)          return;
+        if (Phase != GamePhase.GameOver) return;
+        if (_voters.Contains(voter))     return;
+
+        _voters.Add(voter);
+        RematchVotes++;
+
+        Debug.Log($"Vote cast by {voter}. Votes: {RematchVotes}/{TotalPlayers}");
+
+        if (RematchVotes > TotalPlayers / 2)
+            Rpc_StartRematch();
+    }
+
+    /// <summary>
+    /// Resets game state on all clients.
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void Rpc_StartRematch()
+    {
+        Debug.Log("Rpc_StartRematch: Resetting round.");
+
+        // Reset scores on all players
+        var players = new List<Example.Player>();
+        Runner.GetAllBehaviours(players);
+        foreach (var p in players)
+            p.ResetScore();
+
+        if (HasStateAuthority)
+        {
+            ResetRoundToWaiting();
+
+            // Immediately try to start if enough players are still in room
+            TryStartRound();
+        }
+    }
+
+    // Called directly by the HUD leave button
+    public void LeaveRoom()
+    {
+        Debug.Log("LeaveRoom: Returning to lobby.");
+
+        var lobbyManager = FindFirstObjectByType<LobbyManager>(FindObjectsInactive.Include);
+        if (lobbyManager != null)
+        {
+            lobbyManager.ReturnToLobbyFromMatch();
+            return;
+        }
+
+        if (Runner != null && Runner.IsRunning)
+        {
+            Runner.Shutdown(shutdownReason: ShutdownReason.Ok);
+        }
+    }
+
+    // ---- Private helpers ----
+
+    private void HandleVoteRematchRequested()
+    {
+        Rpc_CastVote(Runner.LocalPlayer);
+    }
+
+    private void HandleLeaveRoomRequested()
+    {
+        LeaveRoom();
+    }
+
+    private void ResetRoundToWaiting()
+    {
+        Phase         = GamePhase.Waiting;
+        TimeRemaining = 0f;
+        Winner        = PlayerRef.None;
+        RematchVotes  = 0;
+        TotalPlayers  = 0;
+        _voters.Clear();
+        _gameOverFired = false;
+    }
+    
     private void ShowFinalRankings()
     {
         var players = new List<Example.Player>();
@@ -156,8 +246,6 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         _hud.ShowRankings(ranked);
     }
-
-    // ---- Player count monitoring ----
 
     private void TryStartRound()
     {
@@ -177,15 +265,19 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (!HasStateAuthority) return;
 
-        // If a player leaves during Countdown OR Playing, stop the game
-        if ((Phase == GamePhase.Playing || Phase == GamePhase.Countdown) && 
-            Runner.ActivePlayers.Count() < MinPlayers)
+        bool notEnoughPlayers = Runner.ActivePlayers.Count() < MinPlayers;
+
+        if ((Phase == GamePhase.Playing || Phase == GamePhase.Countdown) && notEnoughPlayers)
         {
-            Phase         = GamePhase.Waiting;
-            TimeRemaining = 0f;
-            Winner        = PlayerRef.None;
-            _gameOverFired = false;
+            ResetRoundToWaiting();
             Debug.Log("GameStateManager: Match aborted - not enough players.");
+        }
+
+        // If in GameOver and players drop below minimum, reset to lobby state
+        if (Phase == GamePhase.GameOver && notEnoughPlayers)
+        {
+            ResetRoundToWaiting();
+            Debug.Log("GameStateManager: Game over state cleared - not enough players.");
         }
     }
 

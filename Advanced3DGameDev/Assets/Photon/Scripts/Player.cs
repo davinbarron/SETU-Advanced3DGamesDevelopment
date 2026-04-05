@@ -31,6 +31,8 @@ namespace Example
 		[Networked] 
 		public int Score { get; set; }
 
+		// ---- Scoring ----
+
 		public void AddScore(int amount)
 		{
 			// Only the client with StateAuthority writes the score
@@ -38,6 +40,20 @@ namespace Example
 			Score += amount;
 			Debug.Log($"Player {Object.InputAuthority} scored! Total: {Score}");
 		}
+
+		public void ResetScore()
+		{
+			if (HasStateAuthority)
+			{
+				Score = 0;
+				Debug.Log($"Player {Object.InputAuthority} score reset.");
+				return;
+			}
+
+			Rpc_ScoreReset();
+		}
+
+		// ---- NetworkBehaviour overrides ----
 
 		public override void FixedUpdateNetwork()
 		{
@@ -96,6 +112,8 @@ namespace Example
 			KCC.Move(_moveVelocity, jumpImpulse);
 		}
 
+		// ---- RPCs ----
+
 		// Source = InputAuthority: only the owning player triggers this
 		// Targets = All: executes on every peer's copy of this object
 		[Rpc(RpcSources.InputAuthority, RpcTargets.All)]
@@ -108,6 +126,15 @@ namespace Example
 			}
 			NameTag.ShowEmote(emote);
 		}
+
+		[Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+		private void Rpc_ScoreReset()
+		{
+			Score = 0;
+			Debug.Log($"Player {Object.InputAuthority} score reset.");
+		}
+
+		// ---- LateUpdate for camera ----
 
 		private void LateUpdate()
 		{

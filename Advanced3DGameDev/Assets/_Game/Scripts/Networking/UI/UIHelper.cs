@@ -38,19 +38,29 @@ public static class UIHelper
         return t;
     }
 
+    public static TMP_Text CreateLabel(Transform parent, string text,
+        float fontSize, FontStyles style, Color color,
+        TextAlignmentOptions alignment, float preferredHeight = 32f, float preferredWidth = -1f)
+    {
+        var label = CreateLabel(parent, text, fontSize, style, color, preferredHeight);
+        label.alignment = alignment;
+
+        if (preferredWidth >= 0f)
+        {
+            var le = label.GetComponent<LayoutElement>();
+            if (le != null)
+            {
+                le.preferredWidth = preferredWidth;
+            }
+        }
+
+        return label;
+    }
+
     public static Button BuildButton(Transform parent, string label,
         Color color, float width, float height = 40f)
     {
-        var go = CreateUIObject("Button", parent);
-        var le = go.AddComponent<LayoutElement>();
-        le.preferredWidth  = width;
-        le.preferredHeight = height;
-
-        var img   = go.AddComponent<Image>();
-        img.color = color;
-        var btn   = go.AddComponent<Button>();
-        btn.targetGraphic = img;
-        btn.colors = new ColorBlock
+        var colors = new ColorBlock
         {
             normalColor      = color,
             highlightedColor = color * 1.2f,
@@ -60,16 +70,49 @@ public static class UIHelper
             fadeDuration     = 0.1f
         };
 
+        return BuildButton(parent, label, colors, width, height);
+    }
+
+    public static Button BuildButton(Transform parent, string label,
+        ColorBlock colors, float width, float height = 40f, float fontSize = 15f, string objectName = "Button")
+    {
+        var go = CreateUIObject(objectName, parent);
+        var le = go.AddComponent<LayoutElement>();
+        le.preferredWidth  = width;
+        le.preferredHeight = height;
+
+        var img   = go.AddComponent<Image>();
+        img.color = colors.normalColor;
+        var btn   = go.AddComponent<Button>();
+        btn.targetGraphic = img;
+        btn.colors = colors;
+
         var lblGo = CreateUIObject("Label", go.transform);
         StretchFull(lblGo);
         var t     = lblGo.AddComponent<TextMeshProUGUI>();
         t.text      = label;
-        t.fontSize  = 15f;
+        t.fontSize  = fontSize;
         t.color     = Color.white;
         t.alignment = TextAlignmentOptions.Center;
         t.raycastTarget = false;
 
         return btn;
+    }
+
+    public static void SetButtonLabel(Button button, string label, float fontSize,
+        Color color, TextAlignmentOptions alignment)
+    {
+        if (button == null)
+            return;
+
+        var labelText = button.GetComponentInChildren<TextMeshProUGUI>();
+        if (labelText == null)
+            return;
+
+        labelText.text      = label;
+        labelText.fontSize  = fontSize;
+        labelText.color     = color;
+        labelText.alignment = alignment;
     }
 
     public static TMP_InputField BuildInputField(Transform parent,

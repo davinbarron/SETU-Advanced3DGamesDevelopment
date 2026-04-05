@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Fusion;
 using TMPro;
@@ -5,8 +6,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Code-driven HUD displaying game phase, countdown timer, live scores and final rankings.
-/// Instantiated and owned by GameStateManager.
+/// Code-driven HUD. Two separate post-game panels:
+/// 1. Scoreboard — shows final rankings for 5 seconds
+/// 2. Vote panel — shows rematch/leave options after scoreboard hides
 /// </summary>
 public class GameHUD
 {
@@ -18,27 +20,43 @@ public class GameHUD
 
     private GameObject     _scorePanel;
     private Transform      _scoreContainer;
-    private List<TMP_Text> _scoreLabels   = new List<TMP_Text>();
+    private List<TMP_Text> _scoreLabels     = new List<TMP_Text>();
 
-    private GameObject     _rankingsPanel;
-    private List<TMP_Text> _rankingLabels = new List<TMP_Text>();
+    private GameObject     _scoreboardPanel;
+    private List<TMP_Text> _rankingLabels   = new List<TMP_Text>();
+
+    private GameObject     _votePanel;
+    private Button         _rematchButton;
+    private Button         _leaveButton;
+    private TMP_Text       _voteStatusLabel;
+
+    private Action         _onVoteRematchRequested;
+    private Action         _onLeaveRoomRequested;
+
+    private float          _scoreboardHideTime = -1f;
+    private bool           _votePanelShown     = false;
 
     // ---- Build ----
 
-    public void Build()
+    public void Build(Action onVoteRematchRequested, Action onLeaveRoomRequested)
     {
+        _onVoteRematchRequested = onVoteRematchRequested;
+        _onLeaveRoomRequested   = onLeaveRoomRequested;
+
         var canvasGo      = new GameObject("GameHUD");
-        Object.DontDestroyOnLoad(canvasGo);
+        UnityEngine.Object.DontDestroyOnLoad(canvasGo);
         var canvas        = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 5;
         canvasGo.AddComponent<CanvasScaler>().uiScaleMode =
             CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        canvasGo.AddComponent<UnityEngine.UI.GraphicRaycaster>();
         _root = canvasGo;
 
         BuildTimerPanel();
         BuildScorePanel();
-        BuildRankingsPanel();
+        BuildScoreboardPanel();
+        BuildVotePanel();
     }
 
     private void BuildTimerPanel()
@@ -84,7 +102,7 @@ public class GameHUD
         layout.childForceExpandWidth  = true;
         layout.childForceExpandHeight = false;
 
-        var header = UIHelper.CreateLabel(_scorePanel.transform, "SCORES",
+        UIHelper.CreateLabel(_scorePanel.transform, "SCORES",
             13f, FontStyles.Bold, new Color(0.75f, 0.75f, 0.75f), 24f);
 
         var containerGo = UIHelper.CreateUIObject("Container", _scorePanel.transform);
@@ -99,41 +117,41 @@ public class GameHUD
         _scorePanel.SetActive(false);
     }
 
-    private void BuildRankingsPanel()
+    private void BuildScoreboardPanel()
     {
-        _rankingsPanel = UIHelper.CreateUIObject("RankingsPanel", _root.transform);
-        var rt = _rankingsPanel.GetComponent<RectTransform>();
+        _scoreboardPanel = UIHelper.CreateUIObject("ScoreboardPanel", _root.transform);
+        var rt = _scoreboardPanel.GetComponent<RectTransform>();
         rt.anchorMin        = new Vector2(0.5f, 0.5f);
         rt.anchorMax        = new Vector2(0.5f, 0.5f);
         rt.pivot            = new Vector2(0.5f, 0.5f);
         rt.sizeDelta        = new Vector2(340f, 300f);
         rt.anchoredPosition = Vector2.zero;
 
-        _rankingsPanel.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.85f);
+        _scoreboardPanel.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.85f);
 
-        var layout     = _rankingsPanel.AddComponent<VerticalLayoutGroup>();
+        var layout     = _scoreboardPanel.AddComponent<VerticalLayoutGroup>();
         layout.padding = new RectOffset(16, 16, 16, 16);
         layout.spacing = 8f;
         layout.childForceExpandWidth  = true;
         layout.childForceExpandHeight = false;
         layout.childAlignment         = TextAnchor.UpperCenter;
 
-        UIHelper.CreateLabel(_rankingsPanel.transform, "FINAL SCORES",
+        UIHelper.CreateLabel(_scoreboardPanel.transform, "FINAL SCORES",
             24f, FontStyles.Bold, Color.white, 40f);
 
         for (int i = 0; i < 4; i++)
         {
-            var row = UIHelper.CreateUIObject($"Rank_{i}", _rankingsPanel.transform);
+            var row   = UIHelper.CreateUIObject($"Rank_{i}", _scoreboardPanel.transform);
             var rowLe = row.AddComponent<LayoutElement>();
             rowLe.preferredHeight = 44f;
             rowLe.minHeight       = 44f;
 
             var rowLayout = row.AddComponent<HorizontalLayoutGroup>();
-            rowLayout.spacing               = 8f;
-            rowLayout.childForceExpandWidth = false;
+            rowLayout.spacing                = 8f;
+            rowLayout.childForceExpandWidth  = false;
             rowLayout.childForceExpandHeight = true;
-            rowLayout.childAlignment        = TextAnchor.MiddleLeft;
-            rowLayout.padding               = new RectOffset(4, 4, 2, 2);
+            rowLayout.childAlignment         = TextAnchor.MiddleLeft;
+            rowLayout.padding                = new RectOffset(4, 4, 2, 2);
 
             // Badge background
             var badgeGo = UIHelper.CreateUIObject("Badge", row.transform);
@@ -165,7 +183,53 @@ public class GameHUD
             _rankingLabels.Add(t);
         }
 
-        _rankingsPanel.SetActive(false);
+        _scoreboardPanel.SetActive(false);
+    }
+
+    private void BuildVotePanel()
+    {
+        _votePanel = UIHelper.CreateUIObject("VotePanel", _root.transform);
+        var rt = _votePanel.GetComponent<RectTransform>();
+        rt.anchorMin        = new Vector2(0.5f, 0.5f);
+        rt.anchorMax        = new Vector2(0.5f, 0.5f);
+        rt.pivot            = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta        = new Vector2(340f, 200f);
+        rt.anchoredPosition = Vector2.zero;
+
+        _votePanel.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.85f);
+
+        var layout     = _votePanel.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(16, 16, 20, 20);
+        layout.spacing = 12f;
+        layout.childForceExpandWidth  = true;
+        layout.childForceExpandHeight = false;
+        layout.childAlignment         = TextAnchor.UpperCenter;
+
+        UIHelper.CreateLabel(_votePanel.transform, "What next?",
+            22f, FontStyles.Bold, Color.white, 36f);
+
+        _voteStatusLabel = UIHelper.CreateLabel(_votePanel.transform,
+            "Vote to play again or leave",
+            14f, FontStyles.Normal, new Color(0.75f, 0.75f, 0.75f), 24f);
+
+        var buttonRow = UIHelper.CreateUIObject("ButtonRow", _votePanel.transform);
+        var buttonRowLe = buttonRow.AddComponent<LayoutElement>();
+        buttonRowLe.preferredHeight = 48f;
+        buttonRowLe.minHeight       = 48f;
+        var buttonRowLayout = buttonRow.AddComponent<HorizontalLayoutGroup>();
+        buttonRowLayout.spacing               = 12f;
+        buttonRowLayout.childForceExpandWidth = false;
+        buttonRowLayout.childAlignment        = TextAnchor.MiddleCenter;
+
+        _rematchButton = UIHelper.BuildButton(buttonRow.transform, "Vote Rematch",
+            new Color(0.2f, 0.75f, 0.35f), 150f, 40f);
+        _rematchButton.onClick.AddListener(OnVoteRematch);
+
+        _leaveButton = UIHelper.BuildButton(buttonRow.transform, "Leave Room",
+            new Color(0.75f, 0.2f, 0.2f), 150f, 40f);
+        _leaveButton.onClick.AddListener(OnLeaveRoom);
+
+        _votePanel.SetActive(false);
     }
 
     // ---- Update ----
@@ -175,8 +239,15 @@ public class GameHUD
         _currentPhase = phase;
         if (_phaseLabel == null) return;
 
-        if (_rankingsPanel != null) _rankingsPanel.SetActive(false);
-        if (_panel        != null) _panel.SetActive(true);
+        // Reset post-game state when returning to Waiting
+        if (phase != GamePhase.GameOver)
+        {
+            _scoreboardHideTime = -1f;
+            _votePanelShown     = false;
+            if (_scoreboardPanel != null) _scoreboardPanel.SetActive(false);
+            if (_votePanel       != null) _votePanel.SetActive(false);
+            if (_panel           != null) _panel.SetActive(true);
+        }
 
         switch (phase)
         {
@@ -222,7 +293,9 @@ public class GameHUD
     public void UpdateScores(NetworkRunner runner)
     {
         if (_scorePanel == null) return;
-        if (_currentPhase != GamePhase.Playing && _currentPhase != GamePhase.GameOver)
+
+        // Hide score panel during game over — scoreboard replaces it
+        if (_currentPhase != GamePhase.Playing)
         {
             _scorePanel.SetActive(false);
             return;
@@ -260,10 +333,16 @@ public class GameHUD
 
     public void ShowRankings(List<(string name, int score, int rank)> rankings)
     {
-        if (_rankingsPanel == null) return;
-        if (_panel != null) _panel.SetActive(false);
+        if (_scoreboardPanel == null) return;
 
-        _rankingsPanel.SetActive(true);
+        // Keep timer panel visible — update phase label with countdown
+        if (_panel != null) _panel.SetActive(true);
+        if (_scorePanel != null) _scorePanel.SetActive(false);
+
+        _scoreboardPanel.SetActive(true);
+        if (_votePanel != null) _votePanel.SetActive(false);
+        _votePanelShown     = false;
+        _scoreboardHideTime = Time.time + 5f;
 
         for (int i = 0; i < _rankingLabels.Count; i++)
         {
@@ -280,9 +359,71 @@ public class GameHUD
         }
     }
 
+    public void UpdateVoteStatus(int votes, int total)
+    {
+        if (_voteStatusLabel == null) return;
+        if (total == 0)               return;
+
+        int needed = total / 2 + 1;
+        _voteStatusLabel.text = votes == 0
+            ? "Vote to play again or leave"
+            : $"Rematch votes: {votes} / {total}  (need {needed})";
+    }
+
+    /// <summary>
+    /// Called every Render() frame — handles the scoreboard to vote panel transition.
+    /// </summary>
+    public void Tick()
+    {
+        if (_currentPhase != GamePhase.GameOver) return;
+
+        // Update countdown in the timer panel while scoreboard is showing
+        if (!_votePanelShown && _scoreboardHideTime >= 0f && _phaseLabel != null)
+        {
+            int remaining = Mathf.CeilToInt(_scoreboardHideTime - Time.time);
+            remaining = Mathf.Max(0, remaining);
+            _phaseLabel.text  = $"Game Over — voting in {remaining}...";
+            _timerLabel.text  = "";
+        }
+
+        if (_votePanelShown)     return;
+        if (_scoreboardHideTime < 0f) return;
+        if (Time.time < _scoreboardHideTime) return;
+
+        // Scoreboard time elapsed — hide timer panel, show vote panel
+        if (_scoreboardPanel != null) _scoreboardPanel.SetActive(false);
+        if (_panel           != null) _panel.SetActive(false); // Hide game over panel
+
+        if (_votePanel != null)
+        {
+            _votePanel.SetActive(true);
+            if (_rematchButton   != null) _rematchButton.interactable   = true;
+            if (_leaveButton     != null) _leaveButton.interactable     = true;
+            if (_voteStatusLabel != null)
+                _voteStatusLabel.text = "Vote to play again or leave";
+        }
+
+        _votePanelShown     = true;
+        _scoreboardHideTime = -1f;
+    }
+
     public void Destroy()
     {
-        if (_root != null) Object.Destroy(_root);
+        if (_root != null) UnityEngine.Object.Destroy(_root);
+    }
+
+    // ---- Button handlers ----
+
+    private void OnVoteRematch()
+    {
+        if (_rematchButton != null) _rematchButton.interactable = false;
+        _onVoteRematchRequested?.Invoke();
+    }
+
+    private void OnLeaveRoom()
+    {
+        if (_leaveButton != null) _leaveButton.interactable = false;
+        _onLeaveRoomRequested?.Invoke();
     }
 
     // ---- Helpers ----
@@ -291,10 +432,10 @@ public class GameHUD
     {
         switch (index)
         {
-            case 0:  return new Color(1f,    0.84f, 0f,    1f); // Gold
-            case 1:  return new Color(0.75f, 0.75f, 0.75f, 1f); // Silver
-            case 2:  return new Color(0.8f,  0.5f,  0.2f,  1f); // Bronze
-            default: return new Color(0.3f,  0.3f,  0.3f,  1f); // Grey
+            case 0:  return new Color(1f,    0.84f, 0f,    1f);
+            case 1:  return new Color(0.75f, 0.75f, 0.75f, 1f);
+            case 2:  return new Color(0.8f,  0.5f,  0.2f,  1f);
+            default: return new Color(0.3f,  0.3f,  0.3f,  1f);
         }
     }
 

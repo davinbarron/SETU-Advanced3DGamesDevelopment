@@ -10,6 +10,9 @@ public class UnityServiceManager : MonoBehaviour
 {
     private static bool   signInComplete;
     private static string _playerName;
+    private static bool   _signInInProgress;
+
+    private bool _lobbyBootstrapped;
 
     public static string PlayerId    => AuthenticationService.Instance.PlayerId;
     public static string AccessToken => AuthenticationService.Instance.AccessToken;
@@ -27,10 +30,12 @@ public class UnityServiceManager : MonoBehaviour
             // Initialize Unity Services
             await UnityServices.InitializeAsync();
 
+            // Avoid duplicate subscriptions when this object is recreated.
+            PlayerAccountService.Instance.SignedIn -= SignedIn;
             PlayerAccountService.Instance.SignedIn += SignedIn;
             if (PlayerAccountService.Instance.IsSignedIn)
             {
-                // If the player is already signed into Unity Player Accounts, proceed directly to the Unity Authentication sign-in.
+                // If already signed into Player Accounts, continue auth flow immediately.
                 SignedIn();
                 return;
             }
@@ -59,14 +64,38 @@ public class UnityServiceManager : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (PlayerAccountService.Instance != null)
+        {
+            PlayerAccountService.Instance.SignedIn -= SignedIn;
+        }
+    }
+
     private async void SignedIn()
     {
+        if (_lobbyBootstrapped)
+            return;
+
+        if (_signInInProgress)
+            return;
+
+        _signInInProgress = true;
         signInComplete = false;
+
         try
         {
-            await AuthenticationService.Instance.SignInWithUnityAsync(PlayerAccountService.Instance.AccessToken);
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                await AuthenticationService.Instance.SignInWithUnityAsync(PlayerAccountService.Instance.AccessToken);
+                Debug.Log("SignIn is successful.");
+            }
+            else
+            {
+                Debug.Log("Already signed in to Unity Authentication. Skipping re-authentication.");
+            }
+
             signInComplete = true;
-            Debug.Log("SignIn is successful.");
 
             // Fetch the human-friendly display name from Unity Player Accounts.
             _playerName = await AuthenticationService.Instance.GetPlayerNameAsync();
@@ -84,6 +113,16 @@ public class UnityServiceManager : MonoBehaviour
             // Notify the player with the proper error message
             Debug.LogException(ex);
         }
+        finally
+        {
+            _signInInProgress = false;
+        }
+
+        if (!AuthenticationService.Instance.IsSignedIn)
+        {
+            Debug.LogError("[UnityServicesManager] Authentication did not complete. Lobby startup aborted.");
+            return;
+        }
 
         var fusionBootstrap = FindFirstObjectByType<FusionBootstrap>(FindObjectsInactive.Include);
         var lobbyManager    = FindFirstObjectByType<LobbyManager>(FindObjectsInactive.Include);
@@ -94,6 +133,7 @@ public class UnityServiceManager : MonoBehaviour
             return;
         }
 
+        _lobbyBootstrapped = true;
         lobbyManager.ShowLobby(
             fusionBootstrap,
             AuthenticationService.Instance.PlayerId,

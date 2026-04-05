@@ -2,7 +2,7 @@
 
 ## Section 1 — Weekly Evidence Log
 
-The dates shown here in my learning log capture the truthful commits logged throughout the semester from my repo. These differ from the provided example from the rubric which shows each week in order from 1-9. However I have broken them up into the lab sessions covered and the CA2 feature implemntation work.
+The dates shown here in my learning log capture the truthful commits logged throughout the semester from my repo. These differ from the provided example from the rubric which shows each week in order from 1-9. Here I want to show real work done and when I did it e.g instead of including the week 5 lab in week 5 I have it as week 8 since that is when I did the work. However I have broken them up into the lab sessions and the CA2 feature implemntation work for readability.
 
 | Week | Dates | What I worked on | Key commits / tags | Evidence references | Blocker / resolution |
 |---|---|---|---|---|---|

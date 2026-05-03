@@ -14,6 +14,7 @@ namespace Fusion.Addons.SimpleKCC
 
         protected override void OnEnterState()
         {
+            if (!Object.HasStateAuthority) return;
             if (_target != null)
                 Agent.SetDestination(_target.position);
         }

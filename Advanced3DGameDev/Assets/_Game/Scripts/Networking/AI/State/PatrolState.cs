@@ -18,8 +18,9 @@ namespace Fusion.Addons.SimpleKCC
             }
         }
 
-        protected override void OnEnterState()  // authority only
+        protected override void OnEnterState()
         {
+            if (!Object.HasStateAuthority) return; // guard — authority only
             if (_wayPoints == null || _wayPoints.Length == 0) return;
             Agent.SetDestination(_wayPoints[_waypointIndex].position);
         }

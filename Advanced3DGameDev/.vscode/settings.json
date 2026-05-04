@@ -67,5 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Advanced3DGameDev.slnx"
+    "dotnet.defaultSolution": "Advanced3DGameDev.slnx",
+    "snyk.advanced.autoSelectOrganization": true
 }

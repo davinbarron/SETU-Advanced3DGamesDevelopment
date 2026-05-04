@@ -8,9 +8,9 @@ TextScriptImporter:
   assetBundleVariant: 
 AssetOrigin:
   serializedVersion: 1
-  productId: 213197
-  packageName: Unity Terrain - URP Demo Scene
-  packageVersion: 1.0.3
-  assetPath: Assets/TerrainDemoScene_URP/TextMeshPro/Resources/LineBreaking Leading
-    Characters.txt
-  uploadId: 727820
+  productId: 298313
+  packageName: Behavior Demo For Unity
+  packageVersion: 0.5
+  assetPath: Assets/_Imports/TerrainDemoScene_URP/TextMeshPro/Resources/LineBreaking
+    Leading Characters.txt
+  uploadId: 782440

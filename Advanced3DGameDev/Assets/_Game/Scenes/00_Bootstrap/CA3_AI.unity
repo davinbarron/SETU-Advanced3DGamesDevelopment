@@ -990,7 +990,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e0b6b6c90214fc4ea6c69fc70abcc50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Example.NPCSpawner
-  _npcPrefab: {fileID: 3206988120537068961, guid: 1a8bf0ea6cbe5bf458ddf4cfd80b5ba6, type: 3}
+  _npcPrefab: {fileID: 5257866988566299812, guid: 90dec33a10895d3479a69bfa47b61476, type: 3}
   _spawnPoint: {fileID: 1583543044}
 --- !u!1 &1260229005
 GameObject:

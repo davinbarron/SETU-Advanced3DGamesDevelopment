@@ -1,3 +1,4 @@
+using Example;
 using Fusion;
 using Fusion.Addons.FSM;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ namespace Fusion.Addons.SimpleKCC
     {
         [SerializeField] private PatrolState _patrol;
         [SerializeField] private ChaseState _chase;
-        [SerializeField] private float _chaseRange;
+        [SerializeField] private float _chaseRange = 10.0f;
 
         // Networked so every peer knows which player to chase.
         // Resolved to a Transform each tick via Runner.GetPlayerObject().
@@ -43,10 +44,17 @@ namespace Fusion.Addons.SimpleKCC
         public override void FixedUpdateNetwork()
         {
             if (!Object.HasStateAuthority) return;
-            if (_chaseTarget == PlayerRef.None) return;
+
+            if (_chaseTarget == PlayerRef.None) {
+                Debug.LogWarning($"[EnemyAI] FixedUpdateNetwork: _chaseTarget is None on P{Runner.LocalPlayer.PlayerId}.");
+                return;
+            }
 
             NetworkObject targetObject = Runner.GetPlayerObject(_chaseTarget);
-            if (targetObject == null) return;
+            if (targetObject == null) {
+                Debug.LogWarning($"[EnemyAI] FixedUpdateNetwork: GetPlayerObject({_chaseTarget}) returned null.");
+                return;
+            }
 
             Transform targetTransform = targetObject.transform;
             _chase.SetTarget(targetTransform);

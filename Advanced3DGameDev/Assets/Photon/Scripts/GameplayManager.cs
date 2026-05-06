@@ -36,7 +36,7 @@ namespace Example
 			SpawnPoint[] spawnPoints = Runner.SimulationUnityScene.GetComponents<SpawnPoint>(false);
 
 			// Select random spawnpoint.
-			Transform spawnPoint = spawnPoints[UnityEngine.Random.Range(0, spawnPoints.Length)].transform;
+			Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)].transform;
 
 			// Spawn the player object with correct input authority.
 			NetworkObject player = Runner.Spawn(PlayerPrefab, spawnPoint.position, spawnPoint.rotation, playerRef);
@@ -48,6 +48,12 @@ namespace Example
 			// Every player should be always interested to his player object to prevent accidentally getting out of Area of Interest.
 			// This is valid only if the Interest Management is enabled in Network Project Config.
 			Runner.SetPlayerAlwaysInterested(playerRef, player, true);
+
+			NPCSpawner npcSpawner = FindFirstObjectByType<NPCSpawner>();
+			if (npcSpawner != null)
+			{
+				npcSpawner.SetTarget(playerRef);
+			}
 		}
 
 		private void DespawnPlayer(PlayerRef playerRef, Player player)

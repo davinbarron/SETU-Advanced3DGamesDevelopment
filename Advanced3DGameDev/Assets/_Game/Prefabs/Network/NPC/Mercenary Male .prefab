@@ -292,7 +292,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Fusion.Addons.SimpleKCC.EnemyAI
   _patrol: {fileID: 641861287872607998}
   _chase: {fileID: 3904738994970029645}
-  _chaseRange: 0
+  _chaseRange: 15
 --- !u!114 &-813096678683205476
 MonoBehaviour:
   m_ObjectHideFlags: 0

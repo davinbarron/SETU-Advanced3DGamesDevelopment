@@ -38,7 +38,7 @@ namespace Fusion.Addons.SimpleKCC
         protected override void OnRender()  // all peers - safe for Animator
         {
             Animator?.SetFloat(SpeedHash, 
-                Mathf.Lerp(Animator.GetFloat(SpeedHash), Agent.velocity.magnitude, Time.deltaTime * 8f));
+                Mathf.Lerp(Animator.GetFloat(SpeedHash), Agent.speed, Time.deltaTime * 8f));
         }
     }
 }

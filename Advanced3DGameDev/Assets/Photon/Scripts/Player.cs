@@ -15,6 +15,7 @@ namespace Example
 		public Transform   CameraPivot;
 		public Transform   CameraHandle;
 		public PlayerNameTag  NameTag;
+		public Animator    Animator;
 
 		[Header("Movement")]
 		public float MoveSpeed          = 10.0f;
@@ -30,6 +31,24 @@ namespace Example
 		private Vector3 _moveVelocity { get; set; }
 		[Networked] 
 		public int Score { get; set; }
+
+		private int _animSpeedHash;
+		private int _animJumpHash;
+		private int _animGroundedHash;
+		private int _animFreeFallHash;
+		private int _animMotionSpeedHash;
+
+		private void Awake()
+		{
+			if (Animator != null)
+			{
+				_animSpeedHash = Animator.StringToHash("Speed");
+				_animJumpHash = Animator.StringToHash("Jump");
+				_animGroundedHash = Animator.StringToHash("Grounded");
+				_animFreeFallHash = Animator.StringToHash("FreeFall");
+				_animMotionSpeedHash = Animator.StringToHash("MotionSpeed");
+			}
+		}
 
 		// ---- Scoring ----
 
@@ -110,6 +129,21 @@ namespace Example
 			_moveVelocity = Vector3.Lerp(_moveVelocity, desiredMoveVelocity, acceleration * Runner.DeltaTime);
 
 			KCC.Move(_moveVelocity, jumpImpulse);
+
+			if (Animator != null)
+			{
+				float speed = _moveVelocity.magnitude;
+				bool isGrounded = KCC.IsGrounded;
+				bool isFreeFall = !isGrounded && KCC.RealVelocity.y < 0.0f;
+				float motionSpeed = Input.CurrentInput.MoveDirection.magnitude;
+				bool jumpStarted = jumpImpulse > 0.0f;
+
+				Animator.SetFloat(_animSpeedHash, speed);
+				Animator.SetBool(_animGroundedHash, isGrounded);
+				Animator.SetBool(_animFreeFallHash, isFreeFall);
+				Animator.SetFloat(_animMotionSpeedHash, motionSpeed);
+				Animator.SetBool(_animJumpHash, jumpStarted);
+			}
 		}
 
 		// ---- RPCs ----

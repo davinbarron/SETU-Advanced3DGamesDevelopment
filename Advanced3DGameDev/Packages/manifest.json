@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "com.unity.ai.navigation": "2.0.10",
+    "com.unity.2d.enhancers": "1.0.0",
+    "com.unity.ai.inference": "2.6.1",
+    "com.unity.ai.navigation": "2.0.12",
     "com.unity.burst": "1.8.28",
     "com.unity.cinemachine": "3.1.5",
     "com.unity.collab-proxy": "2.11.3",
@@ -15,7 +17,7 @@
     "com.unity.multiplayer.playmode": "2.0.2",
     "com.unity.multiplayer.tools": "2.2.8",
     "com.unity.nuget.mono-cecil": "1.11.6",
-    "com.unity.package-validation-suite": "0.22.0-preview",
+    "com.unity.package-validation-suite": "0.84.0-preview",
     "com.unity.postprocessing": "3.5.1",
     "com.unity.render-pipelines.core": "17.3.0",
     "com.unity.render-pipelines.universal": "17.3.0",

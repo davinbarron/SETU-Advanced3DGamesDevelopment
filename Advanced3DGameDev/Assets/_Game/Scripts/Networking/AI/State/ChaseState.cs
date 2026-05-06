@@ -5,7 +5,7 @@ namespace Fusion.Addons.SimpleKCC
 {
     public class ChaseState : NPCStateBehaviour
     {
-        private Transform _target;
+        [SerializeField] private Transform _target;
 
         public void SetTarget(Transform target)
         {
@@ -28,7 +28,7 @@ namespace Fusion.Addons.SimpleKCC
         protected override void OnRender()
         {
             Animator?.SetFloat(SpeedHash,
-                Mathf.Lerp(Animator.GetFloat(SpeedHash), 1f, Time.deltaTime * 8f));
+                Mathf.Lerp(Animator.GetFloat(SpeedHash), Agent.speed, Time.deltaTime * 8f));
         }
     }
 }

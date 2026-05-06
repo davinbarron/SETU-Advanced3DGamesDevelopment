@@ -1109,7 +1109,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 40db3173a05ae3242b1c182a09b0a183, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -1241,6 +1241,8 @@ MonoBehaviour:
   CameraPivot: {fileID: 8338988566280778637}
   CameraHandle: {fileID: 3499888920705803421}
   NameTag: {fileID: 8686868241693831407}
+  Animator: {fileID: 6982812146204527121}
+  LocalBodyRenderers: []
   MoveSpeed: 10
   JumpImpulse: 10
   UpGravity: -25
@@ -1249,6 +1251,7 @@ MonoBehaviour:
   GroundDeceleration: 25
   AirAcceleration: 25
   AirDeceleration: 1.3
+  _Score: 0
 --- !u!114 &6492587159078328024
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1297,6 +1300,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNameTag
   HeightOffset: 2.2
+  EmoteDuration: 2.5
   _NickName:
     _length: 0
     _data:

@@ -27,8 +27,11 @@ namespace Fusion.Addons.SimpleKCC
 
         protected override void OnRender()
         {
-            Animator?.SetFloat(SpeedHash,
-                Mathf.Lerp(Animator.GetFloat(SpeedHash), Agent.speed, Time.deltaTime * 8f));
+            float currentVelocity = Agent.velocity.magnitude;
+            Animator?.SetFloat(SpeedHash, Mathf.Lerp(Animator.GetFloat(SpeedHash), currentVelocity, Time.deltaTime * 8f));
+            
+            bool isRunning = currentVelocity > 2.0f;
+            Animator?.SetBool("Running", isRunning);
         }
     }
 }

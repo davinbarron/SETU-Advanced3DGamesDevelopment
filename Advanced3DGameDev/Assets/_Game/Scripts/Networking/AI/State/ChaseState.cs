@@ -15,6 +15,10 @@ namespace Fusion.Addons.SimpleKCC
         protected override void OnEnterState()
         {
             if (!Object.HasStateAuthority) return;
+
+            Agent.speed = 6.0f;
+            Agent.acceleration = 8.0f;
+
             if (_target != null)
                 Agent.SetDestination(_target.position);
         }
@@ -29,9 +33,6 @@ namespace Fusion.Addons.SimpleKCC
         {
             float currentVelocity = Agent.velocity.magnitude;
             Animator?.SetFloat(SpeedHash, Mathf.Lerp(Animator.GetFloat(SpeedHash), currentVelocity, Time.deltaTime * 8f));
-            
-            bool isRunning = currentVelocity > 2.0f;
-            Animator?.SetBool("Running", isRunning);
         }
     }
 }

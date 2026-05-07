@@ -21,6 +21,10 @@ namespace Fusion.Addons.SimpleKCC
         protected override void OnEnterState()
         {
             if (!Object.HasStateAuthority) return; // guard — authority only
+
+            Agent.speed = 2.0f;
+            Agent.acceleration = 4.0f;
+
             if (_wayPoints == null || _wayPoints.Length == 0) return;
             Agent.SetDestination(_wayPoints[_waypointIndex].position);
         }
@@ -39,9 +43,6 @@ namespace Fusion.Addons.SimpleKCC
         {
             float currentVelocity = Agent.velocity.magnitude;
             Animator?.SetFloat(SpeedHash, Mathf.Lerp(Animator.GetFloat(SpeedHash), currentVelocity, Time.deltaTime * 8f));
-            
-            bool isRunning = currentVelocity > 2.0f;
-            Animator?.SetBool("Running", isRunning);
         }
     }
 }

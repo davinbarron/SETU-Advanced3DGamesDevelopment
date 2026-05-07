@@ -4348,7 +4348,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Fusion.Addons.Physics::Fusion.Addons.Physics.RunnerSimulatePhysics3D
   _physicsAuthority: 2
   _physicsTiming: 3
-  ClientPhysicsSimulation: 0
+  ClientPhysicsSimulation: 1
   DeltaTimeMultiplier: 1
   SetUnityFixedTimestep: 0
 --- !u!114 &1117253586
@@ -6941,9 +6941,9 @@ GameObject:
   - component: {fileID: 1725080360}
   - component: {fileID: 1725080365}
   - component: {fileID: 1725080364}
-  - component: {fileID: 1725080363}
   - component: {fileID: 1725080362}
   - component: {fileID: 1725080361}
+  - component: {fileID: 1725080363}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -7037,7 +7037,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99154da7a5e0b2244a74903785c4eb22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Example.GameplayManager
-  PlayerPrefab: {fileID: 3206988120537068961, guid: e8578b8817d4f204f806bb460bfdbfb7, type: 3}
+  PlayerPrefab: {fileID: -2360208014370200893, guid: 26874ec7cfa9aa14d98548b5679c41a2, type: 3}
 --- !u!1001 &1745608706
 PrefabInstance:
   m_ObjectHideFlags: 0

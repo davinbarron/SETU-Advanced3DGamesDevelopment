@@ -16,8 +16,13 @@ namespace Fusion.Addons.SimpleKCC
         {
             if (!Object.HasStateAuthority) return;
 
-            Agent.speed = 6.0f;
+            Agent.speed = 4.0f;
             Agent.acceleration = 8.0f;
+
+            if (AI != null)
+            {
+                AI.NetworkedRunning = true;
+            }
 
             if (_target != null)
                 Agent.SetDestination(_target.position);
@@ -27,12 +32,6 @@ namespace Fusion.Addons.SimpleKCC
         {
             if (_target != null)
                 Agent.SetDestination(_target.position);
-        }
-
-        protected override void OnRender()
-        {
-            float currentVelocity = Agent.velocity.magnitude;
-            Animator?.SetFloat(SpeedHash, Mathf.Lerp(Animator.GetFloat(SpeedHash), currentVelocity, Time.deltaTime * 8f));
         }
     }
 }

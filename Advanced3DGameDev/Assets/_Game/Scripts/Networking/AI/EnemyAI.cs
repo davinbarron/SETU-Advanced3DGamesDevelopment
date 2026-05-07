@@ -3,6 +3,7 @@ using Fusion;
 using Fusion.Addons.FSM;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Fusion.Addons.SimpleKCC
 {
@@ -12,12 +13,17 @@ namespace Fusion.Addons.SimpleKCC
         [SerializeField] private ChaseState _chase;
         [SerializeField] private float _chaseRange = 10.0f;
 
-        // Networked so every peer knows which player to chase.
-        // Resolved to a Transform each tick via Runner.GetPlayerObject().
-
         [Networked] private PlayerRef _chaseTarget { get; set; }
 
+        [Networked] public float NetworkedSpeed { get; set; }
+        [Networked] public bool NetworkedRunning { get; set; }
+
         private StateMachine<StateBehaviour> _machine;
+        private NavMeshAgent _agent;
+        private Animator _animator;
+
+        private int _speedHash;
+        private int _runningHash;
 
         public void SetPlayerTarget(PlayerRef playerRef)
         {
@@ -26,7 +32,23 @@ namespace Fusion.Addons.SimpleKCC
 
         public override void Spawned()
         {
+            _agent = GetComponent<NavMeshAgent>();
+            _animator = GetComponent<Animator>();
+            _speedHash = Animator.StringToHash("Speed");
+            _runningHash = Animator.StringToHash("Running");
+
             Debug.Log($"[EnemyAI] Spawned on P{Runner.LocalPlayer.PlayerId} | HasStateAuthority: {Object.HasStateAuthority}");
+
+            if (Object.HasStateAuthority)
+            {
+                if (_agent != null)
+                {
+                    if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
+                    {
+                        _agent.Warp(hit.position);
+                    }
+                }
+            }
 
             var spawners = Runner.SimulationUnityScene.GetComponents<Example.NPCSpawner>(false);
             if (spawners.Length > 0)
@@ -41,26 +63,56 @@ namespace Fusion.Addons.SimpleKCC
             stateMachines.Add(_machine);
         }
 
+        private float _logTimer = 0f;
+
         public override void FixedUpdateNetwork()
         {
             if (!Object.HasStateAuthority) return;
 
-            if (_chaseTarget == PlayerRef.None) {
-                Debug.LogWarning($"[EnemyAI] FixedUpdateNetwork: _chaseTarget is None on P{Runner.LocalPlayer.PlayerId}.");
-                return;
+            if (_agent != null)
+            {
+                float desiredSpeed = _agent.velocity.magnitude;
+                NetworkedSpeed = Mathf.Min(desiredSpeed, 6.0f);
+
+                if (_animator != null)
+                {
+                    _animator.SetFloat(_speedHash, NetworkedSpeed);
+                    _animator.SetBool(_runningHash, NetworkedRunning);
+                }
+
+                _logTimer += Runner.DeltaTime;
+                if (_logTimer > 2.0f)
+                {
+                    _logTimer = 0f;
+                    Debug.Log($"[EnemyAI] Status: Speed={NetworkedSpeed:F2}, Running={NetworkedRunning}, AnimDelta={_animator.deltaPosition.magnitude:F4}, Pos={transform.position}");
+                }
             }
 
             NetworkObject targetObject = Runner.GetPlayerObject(_chaseTarget);
-            if (targetObject == null) {
-                Debug.LogWarning($"[EnemyAI] FixedUpdateNetwork: GetPlayerObject({_chaseTarget}) returned null.");
-                return;
+            bool hasValidTarget = targetObject != null;
+
+            if (hasValidTarget)
+            {
+                _chase.SetTarget(targetObject.transform);
             }
 
-            Transform targetTransform = targetObject.transform;
-            _chase.SetTarget(targetTransform);
+            float dist = hasValidTarget ? Vector3.Distance(transform.position, targetObject.transform.position) : float.MaxValue;
 
-            float dist = Vector3.Distance(transform.position, targetTransform.position);
-            _machine.TryToggleState(_chase.StateId, dist < _chaseRange);
+            if (_machine != null)
+            {
+                _machine.TryToggleState(_chase.StateId, hasValidTarget && dist < _chaseRange);
+            }
+        }
+
+        public override void Render()
+        {
+            if (_animator != null)
+            {
+                // Smoothly lerp speed for visual stability on all clients.
+                float currentSpeed = _animator.GetFloat(_speedHash);
+                _animator.SetFloat(_speedHash, Mathf.Lerp(currentSpeed, NetworkedSpeed, Time.deltaTime * 5f));
+                _animator.SetBool(_runningHash, NetworkedRunning);
+            }
         }
     }
 }

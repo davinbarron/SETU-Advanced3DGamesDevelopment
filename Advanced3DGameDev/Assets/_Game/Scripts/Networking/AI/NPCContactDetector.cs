@@ -12,7 +12,7 @@ namespace Fusion.Addons.SimpleKCC
     /// tick-aligned, fully simulated posiitons, and is resimulation-safe.
     /// </summary>
     
-    public class NPCContectDetector : NetworkBehaviour
+    public class NPCContactDetector : NetworkBehaviour
     {
         [SerializeField] private float _radius = 1.2f;
         [SerializeField] private float _height = 2.0f;

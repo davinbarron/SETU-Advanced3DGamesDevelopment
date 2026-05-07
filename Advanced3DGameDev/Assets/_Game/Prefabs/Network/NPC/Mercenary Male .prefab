@@ -153,10 +153,10 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: a8de5c9123b321f4bb9321622291f4f5, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 22100000, guid: 45c0808dd4af9474bbe9702f2ebc35e4, type: 2}
+      objectReference: {fileID: 9100000, guid: 7a8b0e88059e0f54f86dbaf08cb62141, type: 2}
     - target: {fileID: 5866666021909216657, guid: a8de5c9123b321f4bb9321622291f4f5, type: 3}
       propertyPath: m_ApplyRootMotion
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -234,7 +234,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 2
+  m_Speed: 6
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
@@ -296,7 +296,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Fusion.Addons.SimpleKCC.EnemyAI
   _patrol: {fileID: 641861287872607998}
   _chase: {fileID: 3904738994970029645}
-  _chaseRange: 15
+  _chaseRange: 6
 --- !u!114 &-813096678683205476
 MonoBehaviour:
   m_ObjectHideFlags: 0

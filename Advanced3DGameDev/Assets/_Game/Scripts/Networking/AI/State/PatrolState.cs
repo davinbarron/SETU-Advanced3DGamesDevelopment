@@ -22,27 +22,51 @@ namespace Fusion.Addons.SimpleKCC
         {
             if (!Object.HasStateAuthority) return; // guard — authority only
 
-            Agent.speed = 2.0f;
+            // Ensure waypoints are collected. Sometimes OnInitialize fires too early.
+            if (_wayPoints == null || _wayPoints.Length == 0)
+            {
+                CollectWaypoints();
+            }
+
+            Agent.speed = 1.5f;
             Agent.acceleration = 4.0f;
 
-            if (_wayPoints == null || _wayPoints.Length == 0) return;
+            if (AI != null)
+            {
+                AI.NetworkedRunning = false;
+            }
+
+            if (_wayPoints == null || _wayPoints.Length == 0)
+            {
+                Debug.LogWarning("[PatrolState] No waypoints found with tag 'npc_wp'. NPC will be stuck.");
+                return;
+            }
+
+            Debug.Log($"[PatrolState] Moving to waypoint {_waypointIndex} at {Agent.speed} speed.");
             Agent.SetDestination(_wayPoints[_waypointIndex].position);
+        }
+
+        private void CollectWaypoints()
+        {
+            GameObject[] tagged = GameObject.FindGameObjectsWithTag("npc_wp");
+            _wayPoints = new Transform[tagged.Length];
+            for (int i = 0; i < tagged.Length; i++)
+            {
+                _wayPoints[i] = tagged[i].transform;
+            }
         }
 
         protected override void OnFixedUpdate()  // authority only
         {
             if (_wayPoints == null || _wayPoints.Length == 0) return;
-            if (Agent.remainingDistance < Agent.stoppingDistance + 0.1f)
+
+            // Check if we reached the destination
+            if (!Agent.pathPending && Agent.remainingDistance < Agent.stoppingDistance + 0.5f)
             {
                 _waypointIndex = (_waypointIndex + 1) % _wayPoints.Length;
                 Agent.SetDestination(_wayPoints[_waypointIndex].position);
+                Debug.Log($"[PatrolState] Destination reached. Moving to next waypoint: {_waypointIndex}");
             }
-        }
-
-        protected override void OnRender()  // all peers - safe for Animator
-        {
-            float currentVelocity = Agent.velocity.magnitude;
-            Animator?.SetFloat(SpeedHash, Mathf.Lerp(Animator.GetFloat(SpeedHash), currentVelocity, Time.deltaTime * 8f));
         }
     }
 }

@@ -30,6 +30,19 @@ namespace Fusion.Addons.SimpleKCC
             _chaseTarget = playerRef;
         }
 
+        private void InitializeAgentOnAuthority()
+        {
+            if (!Object.HasStateAuthority) return;
+            if (_agent == null) return;
+
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
+            {
+                _agent.Warp(hit.position);
+            }
+
+            _agent.updatePosition = true;
+        }
+
         public override void Spawned()
         {
             _agent = GetComponent<NavMeshAgent>();
@@ -39,16 +52,7 @@ namespace Fusion.Addons.SimpleKCC
 
             Debug.Log($"[EnemyAI] Spawned on P{Runner.LocalPlayer.PlayerId} | HasStateAuthority: {Object.HasStateAuthority}");
 
-            if (Object.HasStateAuthority)
-            {
-                if (_agent != null)
-                {
-                    if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
-                    {
-                        _agent.Warp(hit.position);
-                    }
-                }
-            }
+            InitializeAgentOnAuthority();
 
             var spawners = Runner.SimulationUnityScene.GetComponents<Example.NPCSpawner>(false);
             if (spawners.Length > 0)
@@ -63,8 +67,6 @@ namespace Fusion.Addons.SimpleKCC
             stateMachines.Add(_machine);
         }
 
-        private float _logTimer = 0f;
-
         public override void FixedUpdateNetwork()
         {
             if (!Object.HasStateAuthority) return;
@@ -78,13 +80,6 @@ namespace Fusion.Addons.SimpleKCC
                 {
                     _animator.SetFloat(_speedHash, NetworkedSpeed);
                     _animator.SetBool(_runningHash, NetworkedRunning);
-                }
-
-                _logTimer += Runner.DeltaTime;
-                if (_logTimer > 2.0f)
-                {
-                    _logTimer = 0f;
-                    Debug.Log($"[EnemyAI] Status: Speed={NetworkedSpeed:F2}, Running={NetworkedRunning}, AnimDelta={_animator.deltaPosition.magnitude:F4}, Pos={transform.position}");
                 }
             }
 

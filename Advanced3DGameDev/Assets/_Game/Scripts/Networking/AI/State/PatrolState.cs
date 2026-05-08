@@ -22,14 +22,13 @@ namespace Fusion.Addons.SimpleKCC
         {
             if (!Object.HasStateAuthority) return; // guard — authority only
 
-            // Ensure waypoints are collected. Sometimes OnInitialize fires too early.
             if (_wayPoints == null || _wayPoints.Length == 0)
             {
                 CollectWaypoints();
             }
 
-            Agent.speed = 1.5f;
-            Agent.acceleration = 4.0f;
+            Agent.speed = 12.0f;
+            Agent.acceleration = 28.0f;
 
             if (AI != null)
             {
@@ -58,9 +57,9 @@ namespace Fusion.Addons.SimpleKCC
 
         protected override void OnFixedUpdate()  // authority only
         {
+            if (!Object.HasStateAuthority) return;
             if (_wayPoints == null || _wayPoints.Length == 0) return;
 
-            // Check if we reached the destination
             if (!Agent.pathPending && Agent.remainingDistance < Agent.stoppingDistance + 0.5f)
             {
                 _waypointIndex = (_waypointIndex + 1) % _wayPoints.Length;

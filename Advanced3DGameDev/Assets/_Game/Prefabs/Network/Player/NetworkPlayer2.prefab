@@ -1242,7 +1242,6 @@ MonoBehaviour:
   CameraHandle: {fileID: 3499888920705803421}
   NameTag: {fileID: 8686868241693831407}
   Animator: {fileID: 6982812146204527121}
-  LocalBodyRenderers: []
   MoveSpeed: 10
   JumpImpulse: 10
   UpGravity: -25

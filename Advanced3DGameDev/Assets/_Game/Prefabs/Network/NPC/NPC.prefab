@@ -1125,7 +1125,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 40db3173a05ae3242b1c182a09b0a183, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -1158,7 +1158,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 1
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!114 &3206988120537068961
@@ -1235,6 +1235,8 @@ MonoBehaviour:
   _patrol: {fileID: 6665932063321743428}
   _chase: {fileID: 408213685722217152}
   _chaseRange: 5
+  _NetworkedSpeed: 0
+  _NetworkedRunning: 0
 --- !u!114 &6369198716594330423
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -2,3 +2,5 @@ Adv3D2026/.vsconfig
 /Builds
 .vs
 .vscode
+*.data
+

@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-2265206337377544389
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
+  version: 10
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_RadioactiveOrb_Implode
+  m_Shader: {fileID: -6465566751694194690, guid: 29c8636710d976343b717b1b0555b72b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 2
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Base_Colour:
+        m_Texture: {fileID: 2800000, guid: a80492678c97cef419ac9ad12a3d72d4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Emission_Map:
+        m_Texture: {fileID: 2800000, guid: ece62656a7851d2479a685857c65e8eb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Metallic_Alpha_Smoothness:
+        m_Texture: {fileID: 2800000, guid: 5acd30defed78e844a4324d9042cdc49, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Normal_Map:
+        m_Texture: {fileID: 2800000, guid: fa9e34ade9e5bb448bb31913f87875b5, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Occlusion_Map:
+        m_Texture: {fileID: 2800000, guid: e6ecedcd6e76ae54cb6364a2536c816f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Dissolution_Amount: 0
+    - _Edge_Intensity: 5
+    - _Edge_Width: 0.5
+    - _Noise_Scale: 25
+    - _Pulse_Speed: 7
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    m_Colors:
+    - _Edge_Colour: {r: 0.001214108, g: 1.6715409, b: 0.8345476, a: 1}
+    - _Emission_Colour: {r: 0, g: 1, b: 0.65882355, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

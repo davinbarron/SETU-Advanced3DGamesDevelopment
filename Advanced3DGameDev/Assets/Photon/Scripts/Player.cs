@@ -195,5 +195,11 @@ namespace Example
 				Debug.LogWarning("[Player] Player animator is null");
 			}
 		}
+
+		// --- Animation Event Receivers ---
+
+		private void OnFootstep(AnimationEvent animationEvent) { }
+
+		private void OnLand(AnimationEvent animationEvent) { }
 	}
 }

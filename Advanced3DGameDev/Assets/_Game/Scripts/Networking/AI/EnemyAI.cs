@@ -170,5 +170,9 @@ namespace Fusion.Addons.SimpleKCC
         public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
         public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
         public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
+
+        // --- Animation Event Receivers ---
+        private void OnFootstep(AnimationEvent animationEvent) { }
+        private void OnLand(AnimationEvent animationEvent) { }
     }
 }

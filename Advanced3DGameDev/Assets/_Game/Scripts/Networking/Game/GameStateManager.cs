@@ -239,14 +239,7 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         Debug.Log("GameStateManager: Performing full game reset (scores and state).");
         
         ResetRoundToWaiting();
-
-        // Reset scores for all players.
-        var players = new List<Example.Player>();
-        Runner.GetAllBehaviours(players);
-        foreach (var p in players)
-        {
-            p.ResetScore();
-        }
+        ResetAllPlayerScores();
 
         // Call RPC to ensure all clients (including proxies) clean up their UI/Input state
         Rpc_OnGameReset();
@@ -275,8 +268,7 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     private void ShowFinalRankings()
     {
-        var players = new List<Example.Player>();
-        Runner.GetAllBehaviours(players);
+        var players = GetAllPlayers();
 
         // Sort by score descending
         var ranked = players
@@ -294,8 +286,7 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     private void DetermineWinner()
     {
         // Determine winner — highest score wins
-        var players = new List<Example.Player>();
-        Runner.GetAllBehaviours(players);
+        var players = GetAllPlayers();
 
         Example.Player topPlayer = null;
         foreach (var p in players)
@@ -316,10 +307,25 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         // Only start the countdown if we are currently waiting
         if (Phase == GamePhase.Waiting && Runner.ActivePlayers.Count() >= MinPlayers)
         {
+            ResetAllPlayerScores();
+
             Phase = GamePhase.Countdown;
             TimeRemaining = CountdownDuration;
             _gameOverFired = false;
-            Debug.Log("GameStateManager: Starting countdown.");
+            Debug.Log("GameStateManager: Starting countdown and resetting scores.");
+        }
+    }
+
+    private List<Example.Player> GetAllPlayers()
+    {
+        return Example.NetworkUtils.GetAllPlayers(Runner);
+    }
+
+    private void ResetAllPlayerScores()
+    {
+        foreach (var p in Example.NetworkUtils.GetAllPlayers(Runner))
+        {
+            p.ResetScore();
         }
     }
 

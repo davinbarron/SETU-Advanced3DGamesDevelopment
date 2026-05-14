@@ -23,6 +23,11 @@ namespace Example
 
 		private void Update()
 		{
+			// Only the local player's menu script should handle global keyboard shortcuts
+			// to prevent multiple instances from fighting over the cursor state.
+			if (Object != null && !HasInputAuthority)
+				return;
+
 			Keyboard keyboard = Keyboard.current;
 			if (keyboard == null)
 				return;

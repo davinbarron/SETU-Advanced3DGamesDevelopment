@@ -95,8 +95,7 @@ namespace Example
         {
             if (!Object.HasStateAuthority || _spawnedEnemy == null) return;
 
-            var players = new List<Example.Player>();
-            Runner.GetAllBehaviours(players);
+            var players = NetworkUtils.GetAllPlayers(Runner);
 
             Example.Player closestPlayer = null;
             float minDistance = float.MaxValue;

@@ -50,7 +50,21 @@ namespace Example
                 }
             }
 
+
             return null;
+        }
+
+        /// <summary>
+        /// Returns a list of all active player components in the session.
+        /// </summary>
+        public static System.Collections.Generic.List<Player> GetAllPlayers(NetworkRunner runner)
+        {
+            var players = new System.Collections.Generic.List<Player>();
+            if (runner != null && runner.IsRunning)
+            {
+                runner.GetAllBehaviours(players);
+            }
+            return players;
         }
     }
 }

@@ -66,5 +66,16 @@ namespace Example
             }
             return players;
         }
+
+        /// <summary>
+        /// Unified check to determine if a collider belongs to a player.
+        /// </summary>
+        public static bool TryGetPlayer(Collider collider, out Player player)
+        {
+            player = collider.GetComponentInParent<Player>();
+            if (player == null) player = collider.GetComponent<Player>();
+            
+            return player != null || collider.CompareTag("Player");
+        }
     }
 }

@@ -1,10 +1,15 @@
 using System.Collections.Generic;
 using Fusion;
-using Fusion.Sockets;
 using UnityEngine;
+using Example;
 
+/// <summary>
+/// Handles the gameplay logic for collectible orbs (scoring and respawning).
+/// Delegates visual "Dissolve" effects to the BurnAndDissolveA2 component if present.
+/// </summary>
 public class ScoreOrb : NetworkBehaviour
 {
+    [Header("Collection Settings")]
     [SerializeField] private float _collectRadius = 1.5f;
     [SerializeField] private int   _scoreValue    = 10;
     [SerializeField] private float _respawnTime   = 10f;
@@ -13,14 +18,22 @@ public class ScoreOrb : NetworkBehaviour
     [Networked] public float RespawnTimer { get; set; }
 
     private ChangeDetector _changes;
-    private Renderer[]     _renderers;
     private Collider       _collider;
+    private Semester2.BurnAndDissolveA2 _dissolveEffect;
 
     public override void Spawned()
     {
         _changes   = GetChangeDetector(ChangeDetector.Source.SimulationState);
-        _renderers = GetComponentsInChildren<Renderer>();
         _collider  = GetComponent<Collider>();
+        
+        // Find and configure the visual dissolve effect
+        _dissolveEffect = GetComponent<Semester2.BurnAndDissolveA2>();
+        if (_dissolveEffect != null)
+        {
+            // Orbs manage their own lifecycle, so we tell the effect to be passive.
+            // This must be set for all clients to prevent accidental triggers.
+            _dissolveEffect.independentMode = false;
+        }
 
         if (HasStateAuthority)
         {
@@ -28,15 +41,14 @@ public class ScoreOrb : NetworkBehaviour
             RespawnTimer = 0f;
         }
 
-        // Apply initial visual state
-        ApplyVisual();
+        ApplyCollisionState();
     }
 
     public override void FixedUpdateNetwork()
     {
         if (!HasStateAuthority) return;
 
-        // --- Respawn countdown ---
+        // --- Respawn Logic ---
         if (IsCollected)
         {
             RespawnTimer -= Runner.DeltaTime;
@@ -44,31 +56,43 @@ public class ScoreOrb : NetworkBehaviour
             {
                 IsCollected  = false;
                 RespawnTimer = 0f;
-                Debug.Log($"ScoreOrb {gameObject.name}: Respawned.");
+                
+                // Visual reset
+                if (_dissolveEffect != null)
+                    _dissolveEffect.ResetDissolve();
             }
             return;
         }
 
-        // --- Overlap check for nearby players ---
-        if (GameStateManager.Instance == null) return;
-        if (GameStateManager.Instance.Phase != GamePhase.Playing) return;
+        // --- Collection Logic ---
+        if (GameStateManager.Instance == null || GameStateManager.Instance.Phase != GamePhase.Playing) 
+            return;
 
         var hits = Physics.OverlapSphere(transform.position, _collectRadius);
-
         foreach (var hit in hits)
         {
-            var player = hit.GetComponentInParent<Example.Player>();
-            if (player == null) continue;
-
-            // Mark collected and start respawn timer
-            IsCollected  = true;
-            RespawnTimer = _respawnTime;
-
-            // Grant score using RPC so the correct authority client writes it
-            Rpc_GrantScore(player.Object.InputAuthority);
-            Debug.Log($"ScoreOrb {gameObject.name}: Collected by {player.Object.InputAuthority}.");
-            break; // Only one player can collect
+            if (NetworkUtils.TryGetPlayer(hit, out var player))
+            {
+                Collect(player);
+                break;
+            }
         }
+    }
+
+    private void Collect(Example.Player player)
+    {
+        if (!HasStateAuthority) return;
+
+        IsCollected  = true;
+        RespawnTimer = _respawnTime;
+
+        // Delegate visuals to the specialized shader script
+        if (_dissolveEffect != null)
+            _dissolveEffect.StartDissolve();
+
+        // Grant score via RPC to the player's authority
+        Rpc_GrantScore(player.Object.InputAuthority);
+        Debug.Log($"[ScoreOrb] {gameObject.name} collected by P{player.Object.InputAuthority.PlayerId}.");
     }
 
     public override void Render()
@@ -78,34 +102,33 @@ public class ScoreOrb : NetworkBehaviour
             switch (change)
             {
                 case nameof(IsCollected):
-                    ApplyVisual();
+                    ApplyCollisionState();
                     break;
             }
         }
     }
 
-    // -- RPC triggered by orb StateAuthority, runs on ALL peers. --
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void Rpc_GrantScore(PlayerRef targetPlayer)
     {
-        // Find the player object
         var playerObject = Runner.GetPlayerObject(targetPlayer);
-        if (playerObject == null) return;
-
-        var player = playerObject.GetComponent<Example.Player>();
-        if (player == null) return;
-
-        // Only the client that owns this player object writes the score
-        player.AddScore(_scoreValue);
+        if (playerObject != null && playerObject.TryGetComponent<Example.Player>(out var player))
+        {
+            player.AddScore(_scoreValue);
+        }
     }
 
-    private void ApplyVisual()
+    private void ApplyCollisionState()
     {
-        bool visible = !IsCollected;
-        foreach (var r in _renderers)
-            r.enabled = visible;
-
+        // Collider is always managed by the ScoreOrb logic to prevent double-collection
         if (_collider != null)
-            _collider.enabled = visible;
+            _collider.enabled = !IsCollected;
+
+        // If no dissolve effect is present, we provide a fallback simple visibility toggle
+        if (_dissolveEffect == null)
+        {
+            var renderers = GetComponentsInChildren<Renderer>();
+            foreach (var r in renderers) r.enabled = !IsCollected;
+        }
     }
 }

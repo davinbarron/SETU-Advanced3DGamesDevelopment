@@ -18,7 +18,7 @@ namespace Example
         [SerializeField] private NetworkObject _npcPrefab;
         [SerializeField] private Transform _spawnPoint;
 
-        private EnemyAI _spawnedEnemy;
+        [Networked] private EnemyAI _spawnedEnemy { get; set; }
         private PlayerRef _pendingTarget = PlayerRef.None;
 
         // Networked flag - written by the first peer to hold StateAuthority
@@ -34,25 +34,12 @@ namespace Example
 
             Runner.AddCallbacks(this);
 
-            if (!Object.HasStateAuthority) return;
-            
-            // If the flag says it's spawned, but we don't have a local reference,
-            // try to find it in the scene before deciding to spawn a new one.
-            if (_npcSpawned && _spawnedEnemy == null)
+            // If we are authority and it hasn't been spawned yet, spawn it.
+            if (Object.HasStateAuthority && !_npcSpawned)
             {
-                var enemies = new List<EnemyAI>();
-                Runner.GetAllBehaviours(enemies);
-                if (enemies.Count > 0)
-                {
-                    _spawnedEnemy = enemies[0];
-                    Debug.Log($"[NPCSpawner] Found existing NPC: {_spawnedEnemy.name}");
-                }
+                _npcSpawned = true;
+                SpawnNPC();
             }
-
-            if (_npcSpawned) return;
-
-            _npcSpawned = true;
-            SpawnNPC();
         }
 
         public override void Despawned(NetworkRunner runner, bool hasState)
@@ -67,7 +54,8 @@ namespace Example
             Quaternion rotation = _spawnPoint != null ? _spawnPoint.rotation : Quaternion.identity;
 
             Debug.Log($"[NPCSpawner] Spawning NPC at {position}");
-            Runner.Spawn(_npcPrefab, position, rotation);
+            NetworkObject npcObj = Runner.Spawn(_npcPrefab, position, rotation);
+            _spawnedEnemy = npcObj.GetComponent<EnemyAI>();
         }
 
         public override void FixedUpdateNetwork()

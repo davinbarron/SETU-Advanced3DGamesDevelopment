@@ -27,8 +27,8 @@ namespace Fusion.Addons.SimpleKCC
                 CollectWaypoints();
             }
 
-            Agent.speed = 12.0f;
-            Agent.acceleration = 28.0f;
+            Agent.speed = 4.5f;
+            Agent.acceleration = 10.0f;
 
             if (AI != null)
             {

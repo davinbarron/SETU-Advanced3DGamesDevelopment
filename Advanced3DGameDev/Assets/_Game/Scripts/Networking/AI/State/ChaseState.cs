@@ -16,8 +16,8 @@ namespace Fusion.Addons.SimpleKCC
         {
             if (!Object.HasStateAuthority) return;
 
-            Agent.speed = 25.0f;
-            Agent.acceleration = 50.0f;
+            Agent.speed = 12.0f;
+            Agent.acceleration = 20.0f;
 
             if (AI != null)
             {

@@ -186,6 +186,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a8de5c9123b321f4bb9321622291f4f5, type: 3}
       insertIndex: -1
       addedObject: {fileID: -813096678683205476}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a8de5c9123b321f4bb9321622291f4f5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4145434659230583861}
   m_SourcePrefab: {fileID: 100100000, guid: a8de5c9123b321f4bb9321622291f4f5, type: 3}
 --- !u!4 &5923187964331215816 stripped
 Transform:
@@ -266,6 +269,7 @@ MonoBehaviour:
   - {fileID: 8636363188548586486}
   - {fileID: 8151875558313076549}
   - {fileID: -813096678683205476}
+  - {fileID: 4145434659230583861}
   - {fileID: 3904738994970029645}
   - {fileID: 641861287872607998}
   ForceRemoteRenderTimeframe: 0
@@ -316,3 +320,21 @@ MonoBehaviour:
   SyncParent: 0
   _autoAOIOverride: 1
   DisableSharedModeInterpolation: 0
+--- !u!114 &4145434659230583861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6447101597626700146}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a8a6306ba33d2946a4ef0f70d9d4b8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Fusion.Addons.SimpleKCC.NPCContactDetector
+  _radius: 1.2
+  _height: 2
+  _playerLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  _contactCooldown: 1.5

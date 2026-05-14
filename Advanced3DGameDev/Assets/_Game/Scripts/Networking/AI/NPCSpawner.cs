@@ -45,12 +45,11 @@ namespace Example
         public override void Despawned(NetworkRunner runner, bool hasState)
         {
             runner.RemoveCallbacks(this);
-            _spawnedEnemy = null;
         }
 
         private void SpawnNPC()
         {
-            Vector3    position = _spawnPoint != null ? _spawnPoint.position : Vector3.zero;
+            Vector3 position = _spawnPoint != null ? _spawnPoint.position : Vector3.zero;
             Quaternion rotation = _spawnPoint != null ? _spawnPoint.rotation : Quaternion.identity;
 
             Debug.Log($"[NPCSpawner] Spawning NPC at {position}");
@@ -60,57 +59,44 @@ namespace Example
 
         public override void FixedUpdateNetwork()
         {
-            // If we are authority and the NPC is missing but should be there, re-spawn it.
-            // This handles cases where the NPC was destroyed during host migration.
-            if (Object.HasStateAuthority && _npcSpawned && _spawnedEnemy == null)
+            if (!Object.HasStateAuthority) return;
+
+            HandleNpcRecovery();
+            HandleTargeting();
+        }
+
+        private void HandleNpcRecovery()
+        {
+            if (_npcSpawned && _spawnedEnemy == null)
             {
                 // Double check if it exists but hasn't registered yet
                 var enemies = new List<EnemyAI>();
                 Runner.GetAllBehaviours(enemies);
-                if (enemies.Count > 0)
-                {
-                    _spawnedEnemy = enemies[0];
-                }
+                
+                if (enemies.Count > 0) _spawnedEnemy = enemies[0];
                 else
                 {
                     Debug.LogWarning("[NPCSpawner] NPC missing but flag is set. Re-spawning...");
                     SpawnNPC();
                 }
             }
+        }
 
-            // If we are authority, ensure the NPC has a valid target.
-            // We throttle this to run every 0.25 seconds to save performance.
-            if (Object.HasStateAuthority && _spawnedEnemy != null)
+        private void HandleTargeting()
+        {
+            if (_spawnedEnemy == null) return;
+
+            _targetUpdateTimer += Runner.DeltaTime;
+            if (_targetUpdateTimer >= 0.25f)
             {
-                _targetUpdateTimer += Runner.DeltaTime;
-                if (_targetUpdateTimer >= 0.25f)
-                {
-                    _targetUpdateTimer = 0f;
-                    UpdateClosestTarget();
-                }
+                _targetUpdateTimer = 0f;
+                UpdateClosestTarget();
             }
         }
 
         private void UpdateClosestTarget()
         {
-            if (!Object.HasStateAuthority || _spawnedEnemy == null) return;
-
-            var players = NetworkUtils.GetAllPlayers(Runner);
-
-            Example.Player closestPlayer = null;
-            float minDistance = float.MaxValue;
-
-            foreach (var p in players)
-            {
-                if (p.Object == null) continue;
-                
-                float dist = Vector3.Distance(_spawnedEnemy.transform.position, p.transform.position);
-                if (dist < minDistance)
-                {
-                    minDistance = dist;
-                    closestPlayer = p;
-                }
-            }
+            Player closestPlayer = FindClosestPlayer();
 
             if (closestPlayer != null)
             {
@@ -121,14 +107,30 @@ namespace Example
                     _spawnedEnemy.SetPlayerTarget(newTarget);
                 }
             }
-            else
+            else if (_spawnedEnemy.ChaseTarget != PlayerRef.None)
             {
-                // No players found? Reset target.
-                if (_spawnedEnemy.ChaseTarget != PlayerRef.None)
+                _spawnedEnemy.SetPlayerTarget(PlayerRef.None);
+            }
+        }
+
+        private Player FindClosestPlayer()
+        {
+            var players = NetworkUtils.GetAllPlayers(Runner);
+            Player closestPlayer = null;
+            float minDistance = float.MaxValue;
+
+            foreach (var p in players)
+            {
+                if (p == null || p.Object == null) continue;
+                
+                float dist = Vector3.Distance(_spawnedEnemy.transform.position, p.transform.position);
+                if (dist < minDistance)
                 {
-                    _spawnedEnemy.SetPlayerTarget(PlayerRef.None);
+                    minDistance = dist;
+                    closestPlayer = p;
                 }
             }
+            return closestPlayer;
         }
 
 

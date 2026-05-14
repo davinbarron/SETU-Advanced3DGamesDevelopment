@@ -20,18 +20,27 @@ namespace Fusion.Addons.SimpleKCC
 
         [Networked] public float NetworkedSpeed { get; set; }
         [Networked] public bool NetworkedRunning { get; set; }
+        [Networked] private int _punchCount { get; set; }
 
+        private int _lastPunchCount;
         private StateMachine<StateBehaviour> _machine;
         private NavMeshAgent _agent;
         private Animator _animator;
 
         private int _speedHash;
         private int _runningHash;
+        private int _punchHash;
 
         public void SetPlayerTarget(PlayerRef playerRef)
         {
             if (!HasStateAuthority) return;
             _chaseTarget = playerRef;
+        }
+
+        public void TriggerPunch()
+        {
+            if (!HasStateAuthority) return;
+            _punchCount++;
         }
 
         private void InitializeAgentOnAuthority()
@@ -53,6 +62,8 @@ namespace Fusion.Addons.SimpleKCC
             _animator = GetComponent<Animator>();
             _speedHash = Animator.StringToHash("Speed");
             _runningHash = Animator.StringToHash("Running");
+            _punchHash = Animator.StringToHash("Punch");
+            _lastPunchCount = _punchCount;
 
             Debug.Log($"[EnemyAI] Spawned on P{Runner.LocalPlayer.PlayerId} | HasStateAuthority: {Object.HasStateAuthority}");
 
@@ -123,6 +134,12 @@ namespace Fusion.Addons.SimpleKCC
                 float currentSpeed = _animator.GetFloat(_speedHash);
                 _animator.SetFloat(_speedHash, Mathf.Lerp(currentSpeed, NetworkedSpeed, Time.deltaTime * 5f));
                 _animator.SetBool(_runningHash, NetworkedRunning);
+
+                if (_punchCount > _lastPunchCount)
+                {
+                    _animator.SetTrigger(_punchHash);
+                    _lastPunchCount = _punchCount;
+                }
             }
         }
 

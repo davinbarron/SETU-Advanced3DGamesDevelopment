@@ -246,7 +246,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3904484718006229105, guid: f2d42d1b93aa2564d9b88871d38247fb, type: 3}
       propertyPath: SortKey
-      value: 1128021234
+      value: 582174577
       objectReference: {fileID: 0}
     - target: {fileID: 7678264114599969321, guid: f2d42d1b93aa2564d9b88871d38247fb, type: 3}
       propertyPath: m_Name
@@ -649,7 +649,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3904484718006229105, guid: f2d42d1b93aa2564d9b88871d38247fb, type: 3}
       propertyPath: SortKey
-      value: 197421257
+      value: 3946541896
       objectReference: {fileID: 0}
     - target: {fileID: 7678264114599969321, guid: f2d42d1b93aa2564d9b88871d38247fb, type: 3}
       propertyPath: m_Name
@@ -801,7 +801,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3904484718006229105, guid: f2d42d1b93aa2564d9b88871d38247fb, type: 3}
       propertyPath: SortKey
-      value: 604154437
+      value: 58307780
       objectReference: {fileID: 0}
     - target: {fileID: 7678264114599969321, guid: f2d42d1b93aa2564d9b88871d38247fb, type: 3}
       propertyPath: m_Name
@@ -877,7 +877,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 3386398561
+  SortKey: 2840551904
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
@@ -939,9 +939,9 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 1937351379
+  SortKey: 1391504722
   ObjectInterest: 1
-  Flags: 262145
+  Flags: 786433
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1260229007}
@@ -960,6 +960,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameStateManager
   _TimeRemaining: 0
   _Phase: 0
+  _RematchVotes: 0
+  _TotalPlayers: 0
 --- !u!4 &1260229008
 Transform:
   m_ObjectHideFlags: 0
@@ -1048,7 +1050,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 46509637
+  SortKey: 3795630276
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
@@ -1423,7 +1425,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3904484718006229105, guid: f2d42d1b93aa2564d9b88871d38247fb, type: 3}
       propertyPath: SortKey
-      value: 3879123518
+      value: 3333276861
       objectReference: {fileID: 0}
     - target: {fileID: 7678264114599969321, guid: f2d42d1b93aa2564d9b88871d38247fb, type: 3}
       propertyPath: m_Name
@@ -1489,7 +1491,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3904484718006229105, guid: f2d42d1b93aa2564d9b88871d38247fb, type: 3}
       propertyPath: SortKey
-      value: 566236919
+      value: 20390262
       objectReference: {fileID: 0}
     - target: {fileID: 7678264114599969321, guid: f2d42d1b93aa2564d9b88871d38247fb, type: 3}
       propertyPath: m_Name

@@ -941,7 +941,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
   SortKey: 1937351379
   ObjectInterest: 1
-  Flags: 262145
+  Flags: 786433
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1260229007}
@@ -960,6 +960,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameStateManager
   _TimeRemaining: 0
   _Phase: 0
+  _RematchVotes: 0
+  _TotalPlayers: 0
 --- !u!4 &1260229008
 Transform:
   m_ObjectHideFlags: 0

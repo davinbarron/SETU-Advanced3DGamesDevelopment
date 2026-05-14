@@ -17,27 +17,27 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
     public static GameStateManager Instance { get; private set; }
 
-    private const float RoundDuration     = 60f;
+    private const float RoundDuration = 60f;
     private const float CountdownDuration = 5f;
-    private const int   MinPlayers        = 2;
+    private const int MinPlayers = 2;
 
-    [Networked] public float     TimeRemaining { get; set; }
-    [Networked] public GamePhase Phase         { get; set; }
-    [Networked] public PlayerRef Winner        { get; set; }
-    [Networked] public int        RematchVotes    { get; set; }
-    [Networked] public int        TotalPlayers    { get; set; }
+    [Networked] public float TimeRemaining { get; set; }
+    [Networked] public GamePhase Phase { get; set; }
+    [Networked] public PlayerRef Winner { get; set; }
+    [Networked] public int RematchVotes { get; set; }
+    [Networked] public int TotalPlayers { get; set; }
 
     private ChangeDetector _changes;
-    private GameHUD        _hud;
-    private bool           _gameOverFired;
-    private HashSet<PlayerRef>   _voters = new HashSet<PlayerRef>();
+    private GameHUD _hud;
+    private bool _gameOverFired;
+    private HashSet<PlayerRef> _voters = new HashSet<PlayerRef>();
 
     // ---- NetworkBehaviours ----
 
     public override void Spawned()
     {
-        Instance       = this;
-        _changes       = GetChangeDetector(ChangeDetector.Source.SimulationState);
+        Instance = this;
+        _changes = GetChangeDetector(ChangeDetector.Source.SimulationState);
         _gameOverFired = false;
 
         Runner.AddCallbacks(this);
@@ -45,7 +45,9 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         _hud = new GameHUD();
         _hud.Build(HandleVoteRematchRequested, HandleLeaveRoomRequested);
 
-        if (HasStateAuthority)
+        // Only reset if we are the authority AND the game hasn't started yet.
+        // This prevents resetting mid-round state during host migration.
+        if (HasStateAuthority && Phase == GamePhase.Waiting)
         {
             ResetRoundToWaiting();
         }
@@ -71,7 +73,7 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
             TimeRemaining -= Runner.DeltaTime;
             if (TimeRemaining <= 0f)
             {
-                Phase         = GamePhase.Playing;
+                Phase = GamePhase.Playing;
                 TimeRemaining = RoundDuration;
                 Debug.Log("GameStateManager: Match Started!");
             }
@@ -83,8 +85,8 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
             if (TimeRemaining <= 0f)
             {
                 TimeRemaining = 0f;
-                Phase         = GamePhase.GameOver;
-                TotalPlayers  = Runner.ActivePlayers.Count();
+                Phase = GamePhase.GameOver;
+                TotalPlayers = Runner.ActivePlayers.Count();
 
                 // Determine winner — highest score wins
                 var players = new List<Example.Player>();
@@ -135,7 +137,7 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     }
 
     // ---- RPCs ----
-    
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void Rpc_GameOver(PlayerRef winner)
     {
@@ -152,9 +154,9 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void Rpc_CastVote(PlayerRef voter)
     {
-        if (!HasStateAuthority)          return;
+        if (!HasStateAuthority) return;
         if (Phase != GamePhase.GameOver) return;
-        if (_voters.Contains(voter))     return;
+        if (_voters.Contains(voter)) return;
 
         _voters.Add(voter);
         RematchVotes++;
@@ -177,7 +179,7 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             // Reset scores for all players.
             var players = new List<Example.Player>();
-            
+
             Runner.GetAllBehaviours(players);
 
             foreach (var p in players)
@@ -222,15 +224,15 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     private void ResetRoundToWaiting()
     {
-        Phase         = GamePhase.Waiting;
+        Phase = GamePhase.Waiting;
         TimeRemaining = 0f;
-        Winner        = PlayerRef.None;
-        RematchVotes  = 0;
-        TotalPlayers  = 0;
+        Winner = PlayerRef.None;
+        RematchVotes = 0;
+        TotalPlayers = 0;
         _voters.Clear();
         _gameOverFired = false;
     }
-    
+
     private void ShowFinalRankings()
     {
         var players = new List<Example.Player>();
@@ -240,9 +242,9 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         var ranked = players
             .OrderByDescending(p => p.Score)
             .Select((p, index) => (
-                name:  p.NameTag != null ? p.NameTag.NickName.Value : $"Player {index + 1}",
+                name: p.NameTag != null ? p.NameTag.NickName.Value : $"Player {index + 1}",
                 score: p.Score,
-                rank:  index + 1
+                rank: index + 1
             ))
             .ToList();
 
@@ -252,11 +254,11 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     private void TryStartRound()
     {
         if (!HasStateAuthority) return;
-        
+
         // Only start the countdown if we are currently waiting
         if (Phase == GamePhase.Waiting && Runner.ActivePlayers.Count() >= MinPlayers)
         {
-            Phase         = GamePhase.Countdown;
+            Phase = GamePhase.Countdown;
             TimeRemaining = CountdownDuration;
             _gameOverFired = false;
             Debug.Log("GameStateManager: Starting countdown.");
@@ -285,7 +287,20 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     // Callbacks
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) => TryStartRound();
-    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)   => TryAbortRound();
+
+    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+    {
+        // If the player who left was the state authority, request authority takeover.
+        // This is critical in Shared Mode to prevent the game from freezing.
+        if (Object != null && Object.StateAuthority == player)
+        {
+            Debug.Log($"GameStateManager: Authority player {player} left. Requesting authority takeover.");
+            Object.RequestStateAuthority();
+        }
+
+        TryAbortRound();
+    }
+
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
     public void OnInput(NetworkRunner runner, NetworkInput input) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }

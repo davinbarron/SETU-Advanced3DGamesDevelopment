@@ -45,11 +45,24 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         _hud = new GameHUD();
         _hud.Build(HandleVoteRematchRequested, HandleLeaveRoomRequested);
 
+        Debug.Log($"GameStateManager: Spawned. Authority: {Object.StateAuthority}, IsMaster: {Runner.IsSharedModeMasterClient}");
+
+        // If we are the master client and no one has authority, take it.
+        if (Runner.IsSharedModeMasterClient && Object.StateAuthority == PlayerRef.None)
+        {
+            Debug.Log("GameStateManager: Master Client taking initial authority.");
+            Object.RequestStateAuthority();
+        }
+
         // Only reset if we are the authority AND the game hasn't started yet.
         // This prevents resetting mid-round state during host migration.
-        if (HasStateAuthority && Phase == GamePhase.Waiting)
+        // HOWEVER, if we are the ONLY player and the game is in Playing state, we should reset.
+        if (HasStateAuthority)
         {
-            ResetRoundToWaiting();
+            if (Phase == GamePhase.Waiting || (Phase == GamePhase.Playing && Runner.ActivePlayers.Count() < MinPlayers))
+            {
+                ResetGame();
+            }
         }
 
         _hud.UpdatePhase(Phase);
@@ -66,6 +79,10 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     public override void FixedUpdateNetwork()
     {
         if (!HasStateAuthority) return;
+
+        // Ensure we check for player count regularly if we are the authority.
+        // This handles cases where we just gained authority after host migration.
+        TryAbortRound();
 
         // --- Logic for Countdown ---
         if (Phase == GamePhase.Countdown)
@@ -88,20 +105,7 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
                 Phase = GamePhase.GameOver;
                 TotalPlayers = Runner.ActivePlayers.Count();
 
-                // Determine winner — highest score wins
-                var players = new List<Example.Player>();
-                Runner.GetAllBehaviours(players);
-
-                Example.Player topPlayer = null;
-                foreach (var p in players)
-                {
-                    if (topPlayer == null || p.Score > topPlayer.Score)
-                        topPlayer = p;
-                }
-
-                Winner = topPlayer != null
-                    ? topPlayer.Object.InputAuthority
-                    : PlayerRef.None;
+                DetermineWinner();
 
                 Rpc_GameOver(Winner);
 
@@ -174,19 +178,9 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     private void Rpc_StartRematch()
     {
         Debug.Log("Rpc_StartRematch: Resetting round.");
-
         if (HasStateAuthority)
         {
-            // Reset scores for all players.
-            var players = new List<Example.Player>();
-
-            Runner.GetAllBehaviours(players);
-
-            foreach (var p in players)
-                p.ResetScore();
-
-            ResetRoundToWaiting();
-
+            ResetGame();
             // Immediately try to start if enough players are still in room
             TryStartRound();
         }
@@ -231,6 +225,52 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         TotalPlayers = 0;
         _voters.Clear();
         _gameOverFired = false;
+
+        // Force a HUD update immediately to ensure the message is visible
+        if (_hud != null)
+        {
+            _hud.UpdatePhase(Phase);
+            _hud.UpdateTimer(TimeRemaining);
+        }
+    }
+
+    public void ResetGame()
+    {
+        Debug.Log("GameStateManager: Performing full game reset (scores and state).");
+        
+        ResetRoundToWaiting();
+
+        // Reset scores for all players.
+        var players = new List<Example.Player>();
+        Runner.GetAllBehaviours(players);
+        foreach (var p in players)
+        {
+            p.ResetScore();
+        }
+
+        // Call RPC to ensure all clients (including proxies) clean up their UI/Input state
+        Rpc_OnGameReset();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void Rpc_OnGameReset()
+    {
+        Debug.Log("GameStateManager: Rpc_OnGameReset received.");
+        _gameOverFired = false;
+        _voters.Clear();
+        
+        if (_hud != null)
+        {
+            _hud.UpdatePhase(Phase);
+            _hud.UpdateTimer(TimeRemaining);
+        }
+
+        // Re-lock cursor if it was unlocked during GameOver
+        if (Runner.GameMode == GameMode.Shared)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
     }
 
     private void ShowFinalRankings()
@@ -251,6 +291,24 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
         _hud.ShowRankings(ranked);
     }
 
+    private void DetermineWinner()
+    {
+        // Determine winner — highest score wins
+        var players = new List<Example.Player>();
+        Runner.GetAllBehaviours(players);
+
+        Example.Player topPlayer = null;
+        foreach (var p in players)
+        {
+            if (topPlayer == null || p.Score > topPlayer.Score)
+                topPlayer = p;
+        }
+
+        Winner = topPlayer != null
+            ? topPlayer.Object.InputAuthority
+            : PlayerRef.None;
+    }
+
     private void TryStartRound()
     {
         if (!HasStateAuthority) return;
@@ -269,35 +327,54 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (!HasStateAuthority) return;
 
-        bool notEnoughPlayers = Runner.ActivePlayers.Count() < MinPlayers;
+        int currentPlayers = Runner.ActivePlayers.Count();
+        bool notEnoughPlayers = currentPlayers < MinPlayers;
 
-        if ((Phase == GamePhase.Playing || Phase == GamePhase.Countdown) && notEnoughPlayers)
+        // If in Countdown and players drop below minimum, reset
+        if (Phase == GamePhase.Countdown && notEnoughPlayers)
         {
-            ResetRoundToWaiting();
-            Debug.Log("GameStateManager: Match aborted - not enough players.");
+            ResetGame();
+            Debug.Log("GameStateManager: Match aborted - not enough players during countdown.");
         }
 
-        // If in GameOver and players drop below minimum, reset to lobby state
-        if (Phase == GamePhase.GameOver && notEnoughPlayers)
+        // If in Playing and players drop below minimum, reset (Host leaving usually triggers this)
+        if (Phase == GamePhase.Playing && notEnoughPlayers)
         {
-            ResetRoundToWaiting();
-            Debug.Log("GameStateManager: Game over state cleared - not enough players.");
+            ResetGame();
+            Debug.Log("GameStateManager: Match aborted - not enough players to continue.");
+        }
+
+        // If in GameOver and players drop to ZERO, reset
+        if (Phase == GamePhase.GameOver && currentPlayers == 0)
+        {
+            ResetGame();
+            Debug.Log("GameStateManager: Game over state cleared - all players left.");
         }
     }
 
     // Callbacks
-    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) => TryStartRound();
-
-    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        // If the player who left was the state authority, request authority takeover.
-        // This is critical in Shared Mode to prevent the game from freezing.
-        if (Object != null && Object.StateAuthority == player)
+        Debug.Log($"GameStateManager: Player Joined {player}. Active Players: {Runner.ActivePlayers.Count()}");
+        
+        // If we are the Master Client and don't have authority, try to take it.
+        if (Runner.IsSharedModeMasterClient && !HasStateAuthority)
         {
-            Debug.Log($"GameStateManager: Authority player {player} left. Requesting authority takeover.");
+            Debug.Log("GameStateManager: Master Client requesting authority on player join.");
             Object.RequestStateAuthority();
         }
 
+        TryStartRound();
+    }
+
+    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+    {
+        Debug.Log($"GameStateManager: Player Left {player}. Authority was: {Object.StateAuthority}");
+
+        // Request authority takeover for this object using shared utility logic.
+        Example.NetworkUtils.RequestAuthorityIfOwnerLeft(Object, player, "GameStateManager");
+
+        // Try to abort if we have authority, or we'll try again once authority is granted.
         TryAbortRound();
     }
 
@@ -316,6 +393,9 @@ public class GameStateManager : NetworkBehaviour, INetworkRunnerCallbacks
     public void OnSceneLoadDone(NetworkRunner runner) { }
     public void OnSceneLoadStart(NetworkRunner runner) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
-    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
+    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) 
+    {
+        Debug.Log("GameStateManager: OnHostMigration callback received. Game will likely reset on new runner.");
+    }
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
 }

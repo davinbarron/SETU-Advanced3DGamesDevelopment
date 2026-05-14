@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
 using Fusion;
 using Fusion.Addons.SimpleKCC;
+using Fusion.Sockets;
 using UnityEngine;
 
 namespace Example
@@ -8,9 +11,9 @@ namespace Example
     /// Spawns the NPC NetworkObject once per session and keeps its
     /// EnemyAI target updated when a player object becomes available.
     /// The peer with the lowest PlayerRef index performs the spawn -
-    /// this is determinsistic and consistent across all peers in Shared Mode.
+    /// this is deterministic and consistent across all peers in Shared Mode.
     /// </summary>
-    public class NPCSpawner : NetworkBehaviour
+    public class NPCSpawner : NetworkBehaviour, INetworkRunnerCallbacks
     {
         [SerializeField] private NetworkObject _npcPrefab;
         [SerializeField] private Transform _spawnPoint;
@@ -23,21 +26,124 @@ namespace Example
         // Spawned() fires, preventing a second spawn.
         [Networked] private NetworkBool _npcSpawned { get; set; }
 
+        private float _targetUpdateTimer = 0f;
+
         public override void Spawned()
         {
             Debug.Log($"[NPCSpawner] Spawned on P{Runner.LocalPlayer.PlayerId} | HasStateAuthority: {Object.HasStateAuthority}");
 
-            if (!Object.HasStateAuthority || !Runner.IsSharedModeMasterClient) return;
+            Runner.AddCallbacks(this);
+
+            if (!Object.HasStateAuthority) return;
+            
+            // If the flag says it's spawned, but we don't have a local reference,
+            // try to find it in the scene before deciding to spawn a new one.
+            if (_npcSpawned && _spawnedEnemy == null)
+            {
+                var enemies = new List<EnemyAI>();
+                Runner.GetAllBehaviours(enemies);
+                if (enemies.Count > 0)
+                {
+                    _spawnedEnemy = enemies[0];
+                    Debug.Log($"[NPCSpawner] Found existing NPC: {_spawnedEnemy.name}");
+                }
+            }
+
             if (_npcSpawned) return;
 
             _npcSpawned = true;
+            SpawnNPC();
+        }
 
+        public override void Despawned(NetworkRunner runner, bool hasState)
+        {
+            runner.RemoveCallbacks(this);
+            _spawnedEnemy = null;
+        }
+
+        private void SpawnNPC()
+        {
             Vector3    position = _spawnPoint != null ? _spawnPoint.position : Vector3.zero;
             Quaternion rotation = _spawnPoint != null ? _spawnPoint.rotation : Quaternion.identity;
 
             Debug.Log($"[NPCSpawner] Spawning NPC at {position}");
             Runner.Spawn(_npcPrefab, position, rotation);
         }
+
+        public override void FixedUpdateNetwork()
+        {
+            // If we are authority and the NPC is missing but should be there, re-spawn it.
+            // This handles cases where the NPC was destroyed during host migration.
+            if (Object.HasStateAuthority && _npcSpawned && _spawnedEnemy == null)
+            {
+                // Double check if it exists but hasn't registered yet
+                var enemies = new List<EnemyAI>();
+                Runner.GetAllBehaviours(enemies);
+                if (enemies.Count > 0)
+                {
+                    _spawnedEnemy = enemies[0];
+                }
+                else
+                {
+                    Debug.LogWarning("[NPCSpawner] NPC missing but flag is set. Re-spawning...");
+                    SpawnNPC();
+                }
+            }
+
+            // If we are authority, ensure the NPC has a valid target.
+            // We throttle this to run every 0.25 seconds to save performance.
+            if (Object.HasStateAuthority && _spawnedEnemy != null)
+            {
+                _targetUpdateTimer += Runner.DeltaTime;
+                if (_targetUpdateTimer >= 0.25f)
+                {
+                    _targetUpdateTimer = 0f;
+                    UpdateClosestTarget();
+                }
+            }
+        }
+
+        private void UpdateClosestTarget()
+        {
+            if (!Object.HasStateAuthority || _spawnedEnemy == null) return;
+
+            var players = new List<Example.Player>();
+            Runner.GetAllBehaviours(players);
+
+            Example.Player closestPlayer = null;
+            float minDistance = float.MaxValue;
+
+            foreach (var p in players)
+            {
+                if (p.Object == null) continue;
+                
+                float dist = Vector3.Distance(_spawnedEnemy.transform.position, p.transform.position);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    closestPlayer = p;
+                }
+            }
+
+            if (closestPlayer != null)
+            {
+                PlayerRef newTarget = closestPlayer.Object.InputAuthority;
+                if (_spawnedEnemy.ChaseTarget != newTarget)
+                {
+                    Debug.Log($"[NPCSpawner] Switching target to closest player: {newTarget}");
+                    _spawnedEnemy.SetPlayerTarget(newTarget);
+                }
+            }
+            else
+            {
+                // No players found? Reset target.
+                if (_spawnedEnemy.ChaseTarget != PlayerRef.None)
+                {
+                    _spawnedEnemy.SetPlayerTarget(PlayerRef.None);
+                }
+            }
+        }
+
 
         /// <summary>
         /// Called by EnemyAI from its own Spawned() once all components are ready.
@@ -64,5 +170,47 @@ namespace Example
             else
                 _pendingTarget = playerRef;
         }
+
+        /// <summary>
+        /// Picks a new target from active players if possible.
+        /// </summary>
+        public void PickNewTarget()
+        {
+            UpdateClosestTarget();
+        }
+
+        // ---- INetworkRunnerCallbacks ----
+
+        public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
+
+        public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+        {
+            // Request authority for the spawner itself if the authority left
+            Example.NetworkUtils.RequestAuthorityIfOwnerLeft(Object, player, "NPCSpawner");
+
+            // Request authority for the spawned NPC as well (SRP)
+            if (_spawnedEnemy != null)
+            {
+                Example.NetworkUtils.RequestAuthorityIfOwnerLeft(_spawnedEnemy.Object, player, "NPCSpawner (Child NPC)");
+            }
+        }
+
+        public void OnInput(NetworkRunner runner, NetworkInput input) { }
+        public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
+        public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
+        public void OnConnectedToServer(NetworkRunner runner) { }
+        public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
+        public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
+        public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
+        public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
+        public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
+        public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
+        public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
+        public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+        public void OnSceneLoadDone(NetworkRunner runner) { }
+        public void OnSceneLoadStart(NetworkRunner runner) { }
+        public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+        public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+        public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
     }
 }

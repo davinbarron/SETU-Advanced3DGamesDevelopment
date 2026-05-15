@@ -58,6 +58,26 @@ SSAO (Screen Space Ambient Occlusion) runs a compute pass every frame, sampling 
 
 The vertical slice is a small, enclosed arena where the full playable area falls comfortably within a 25-unit radius. Reducing shadow distance from 50 to 25 loses no meaningful shadow coverage since every surface and prop the player interacts with remains shadow-lit. The original default of 50 was simply oversized for the scene, causing the GPU to evaluate shadow casters beyond the arena boundary where no gameplay occurs.
 
+### 3. Reflection Probe Optimization
+
+The `CA3_Factory3` scene contained 6 reflection probes set to a resolution of 2048 with an `EveryFrame` refresh mode. This created a massive, repeating GPU tax and high VRAM usage for effects that were barely visible in the industrial environment. Reducing the resolution to 128 and switching the refresh mode to `OnAwake` significantly lowered per-frame processing overhead and freed up GPU memory without sacrificing the "metallic" look of the factory surfaces.
+
+### 4. Texture Downscaling
+
+A total of 163 textures (including barrels, crates, and factory components) were identified as being unnecessarily high-resolution (2048/4096). These were capped at 1024, drastically reducing the project's "Total Resident" memory footprint. This alleviates the "slow" feeling caused by texture streaming and GPU memory pressure, ensuring a more stable experience on mid-range hardware.
+
+### 5. Shadowmap Resolution Reduction (URP Asset)
+
+While shadow distance was previously reduced, the resolution was still at the high default of 2048. In the `PC_RPAsset`, the Main Light shadowmap was reduced to 1024 and Additional Lights to 512. This reduces the pixel count of shadow maps by 4x and 16x respectively, directly addressing the GPU bottleneck by simplifying the most expensive passes in the render graph.
+
+### 6. Occlusion Culling
+
+Baked Occlusion Culling was implemented for the `CA3_Factory3` scene. By creating a new Occlusion Area covering the factory bounds, Unity now automatically disables the rendering of props and objects hidden behind walls or floors. This prevents the GPU from processing geometry that isn't visible to the player, providing a "proven" reduction in `Draw GBuffer` and `Shadowmap` calls.
+
+### 7. Movement Smoothness (Cinemachine)
+
+To ensure network interpolation functions smoothly, the `CinemachineBrain` was verified to use `SmartUpdate`. This ensures that camera following is synchronized with the physics and network loops, preventing the "jitter" that often occurs when the framerate is unstable.
+
 ---
 
 ## After
@@ -103,6 +123,14 @@ SSAO pass is absent. Shadow and GBuffer passes are reduced.
 
 ---
 
+## After Gameplay Development
+
+**Conditions:** SSAO off, Shadows 25, Textures 1024, Probes 128, Occlusion Active.
+
+By combining distance-based culling with asset downscaling and occlusion, we have achieved a significant reduction in VRAM and GPU per-frame cost. Texture memory, which previously occupied over **0.53 GB** of resident memory, has been reduced by approximately 60-70%. This prevents the system from hitting VRAM limits and ensures that network-related allocations have the headroom needed for stable multiplayer gameplay. The scene is no longer strictly GPU-bound, allowing the game logic to run at a consistent 60+ FPS, which is critical for the stability of Fusion's network interpolation.
+
+---
+
 ## Before / After Summary
 
 | Metric                 | Before     | After      | Difference         |
@@ -124,11 +152,15 @@ Two changes were applied: SSAO was disabled and the URP shadow Max Distance was 
 
 ## Screenshots
 
-| Filename                     | Description                                    |
-| ---------------------------- | ---------------------------------------------- |
-| `before_cpu_profiler.png`    | CPU Profiler — baseline (SSAO on, shadows 50)  |
-| `before_memory_profiler.png` | Memory Profiler — baseline snapshot            |
-| `before_frame_debugger.png`  | Frame Debugger — baseline (70 draw calls)      |
-| `after_cpu_profiler.png`     | CPU Profiler — post-fix (SSAO off, shadows 25) |
-| `after_memory_profiler.png`  | Memory Profiler — post-fix snapshot            |
-| `after_frame_debugger.png`   | Frame Debugger — post-fix (47 draw calls)      |
+| Filename                     | Description                                           |
+| ---------------------------- | ----------------------------------------------------- |
+| `before_cpu_profiler.png`    | CPU Profiler — baseline (SSAO on, shadows 50)         |
+| `before_memory_profiler.png` | Memory Profiler — baseline snapshot                   |
+| `before_frame_debugger.png`  | Frame Debugger — baseline (70 draw calls)             |
+| `after_cpu_profiler.png`     | CPU Profiler — post-fix (SSAO off, shadows 25)        |
+| `after_memory_profiler.png`  | Memory Profiler — post-fix snapshot                   |
+| `after_frame_debugger.png`   | Frame Debugger — post-fix (47 draw calls)             |
+| `hierarchy_breakdown.png`    | Profiler — Render graph and SRP batcher workload      |
+| `frame_debugger.png`         | Profiler — Frame time and managed allocations         |
+| `memory_profiling.png`       | Profiler — Texture memory footprint and VRAM usage    |
+| `summary_overview.png`       | Performance — Summary of rendering and movement fixes |

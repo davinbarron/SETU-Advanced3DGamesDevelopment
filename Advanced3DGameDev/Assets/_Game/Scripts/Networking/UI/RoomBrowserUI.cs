@@ -46,7 +46,12 @@ public class RoomBrowserUI : MonoBehaviour
 
         BuildUI();
         Show();
-        SetStatus("Connecting to lobby...");
+        
+        // Check if the lobby is already ready (in case we missed the event)
+        if (_lobbyManager.IsReady)
+            OnLobbyReady();
+        else
+            SetStatus("Connecting to lobby...");
     }
 
     private void OnDestroy()
@@ -114,7 +119,15 @@ public class RoomBrowserUI : MonoBehaviour
 
     private void OnLobbyReady()
     {
-        _createButton.interactable = true;
+        Debug.Log("[RoomBrowserUI] OnLobbyReady received. Enabling Create Button.");
+        if (_createButton != null)
+        {
+            _createButton.interactable = true;
+        }
+        else
+        {
+            Debug.LogError("[RoomBrowserUI] Create Button is NULL when trying to enable it!");
+        }
         SetStatus("Connected: create or join a room.");
     }
 
@@ -274,7 +287,7 @@ public class RoomBrowserUI : MonoBehaviour
         return go;
     }
 
-    private void SetStatus(string msg)
+    public void SetStatus(string msg)
     {
         if (_statusLabel != null)
             _statusLabel.text = msg;

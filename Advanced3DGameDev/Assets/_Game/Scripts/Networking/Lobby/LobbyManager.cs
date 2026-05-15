@@ -113,7 +113,9 @@ public class LobbyManager : MonoBehaviour, INetworkRunnerCallbacks
             yield break;
         }
 
+        // The task completed successfully, so we are ready.
         IsReady = true;
+        Debug.Log("[LobbyManager] Lobby is READY. Invoking OnLobbyReady.");
         OnLobbyReady?.Invoke();
     }
 
@@ -143,7 +145,12 @@ public class LobbyManager : MonoBehaviour, INetworkRunnerCallbacks
         var auth = new AuthenticationValues();
         auth.AuthType = CustomAuthenticationType.Custom;
         auth.AddAuthParameter("id",    _playerId);
+        
+        // --- DEBUG TEST: UNCOMMENT TO FORCE REJECTION FOR EVIDENCE ---
+        // auth.AddAuthParameter("token", "garbage_token_123");
+        
         auth.AddAuthParameter("token", _accessToken);
+        
         return auth;
     }
 
@@ -172,6 +179,24 @@ public class LobbyManager : MonoBehaviour, INetworkRunnerCallbacks
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnSceneLoadDone(NetworkRunner runner) { }
     public void OnSceneLoadStart(NetworkRunner runner) { }
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) 
+    { 
+        Debug.LogWarning($"[LobbyManager] OnShutdown: {shutdownReason}");
+        
+        var ui = GetComponent<RoomBrowserUI>();
+        if (ui != null)
+        {
+            // Specifically highlight auth failure as red
+            if (shutdownReason == ShutdownReason.CustomAuthenticationFailed)
+            {
+                ui.SetStatus("<color=red>AUTH FAILED: Azure Proxy Rejected Connection</color>");
+            }
+            // Ignore normal shutdowns (like when moving from lobby to room)
+            else if (shutdownReason != ShutdownReason.Ok && shutdownReason != ShutdownReason.DisconnectedByPluginLogic)
+            {
+                ui.SetStatus($"<color=orange>Connection Error: {shutdownReason}</color>");
+            }
+        }
+    }
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
 }

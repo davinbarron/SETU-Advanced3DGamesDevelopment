@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Fusion;
 using TMPro;
 using UnityEngine;
@@ -252,10 +253,15 @@ public class GameHUD
         switch (phase)
         {
             case GamePhase.Waiting:
-                _phaseLabel.text  = "Waiting for players...";
+                int currentPlayers = (NetworkRunner.Instances.Count > 0 && NetworkRunner.Instances[0] != null) 
+                    ? NetworkRunner.Instances[0].ActivePlayers.Count() 
+                    : 0;
+                _phaseLabel.text  = currentPlayers < 2 
+                    ? "Waiting for more players... (Need 2 to start)" 
+                    : "Ready to start!";
                 _timerLabel.color = new Color(0.75f, 0.75f, 0.75f);
                 break;
-            case GamePhase.Countdown:
+case GamePhase.Countdown:
                 _phaseLabel.text  = "Get Ready!";
                 _timerLabel.color = Color.yellow;
                 break;

@@ -56,7 +56,7 @@ namespace Example
 		{
 			// Only the client with StateAuthority writes the score
 			if (!HasStateAuthority) return;
-			Score += amount;
+			Score = Mathf.Max(0, Score + amount);
 			Debug.Log($"Player {Object.InputAuthority} scored! Total: {Score}");
 		}
 
@@ -195,5 +195,11 @@ namespace Example
 				Debug.LogWarning("[Player] Player animator is null");
 			}
 		}
+
+		// --- Animation Event Receivers ---
+
+		private void OnFootstep(AnimationEvent animationEvent) { }
+
+		private void OnLand(AnimationEvent animationEvent) { }
 	}
 }

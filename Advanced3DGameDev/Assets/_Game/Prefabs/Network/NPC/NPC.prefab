@@ -1175,7 +1175,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
   SortKey: 105309958
   ObjectInterest: 1
-  Flags: 262145
+  Flags: 524289
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 2811543189625876611}
@@ -1271,6 +1271,7 @@ MonoBehaviour:
   _playerLayer:
     serializedVersion: 2
     m_Bits: 0
+  _contactCooldown: 1
 --- !u!1 &4523139366846529165
 GameObject:
   m_ObjectHideFlags: 0

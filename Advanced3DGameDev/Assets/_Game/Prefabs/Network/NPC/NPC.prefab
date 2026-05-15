@@ -1271,6 +1271,7 @@ MonoBehaviour:
   _playerLayer:
     serializedVersion: 2
     m_Bits: 0
+  _contactCooldown: 1
 --- !u!1 &4523139366846529165
 GameObject:
   m_ObjectHideFlags: 0
